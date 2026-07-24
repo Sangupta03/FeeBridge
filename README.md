@@ -1,61 +1,64 @@
-# FeeBridge
+<div align="center">
 
-**A calmer, kinder way for schools to handle fees, and for families to pay them.**
+# 🌉 FeeBridge
 
-🔗 **Live:** [feebridge.vercel.app](https://feebridge.vercel.app)
+### A calmer, kinder way for schools to handle fees, and for families to pay them.
 
-Built by **Team SheBuilds** for the Smart School FinTech Innovation Challenge.
+**🔗 Live app:** **[feebridge.vercel.app](https://feebridge.vercel.app)**
 
-> Screenshots and a demo video go here — recorded once the last screens are locked down.
+*Built by **Team SheBuilds** for the Smart School FinTech Innovation Challenge*
+
+</div>
+
+> 📸 Screenshots and a demo video land here once the last screens are locked down.
 
 ---
 
-## The problem
+Most schools run fees on registers, spreadsheets, and a WhatsApp group. Cash
+payments go unrecorded until someone remembers to write them down. A family
+with three children gets three separate reminders for what is really one
+household budget. And the families who fall behind often find out they're in
+trouble from a printed defaulter list — the same day everyone else does.
 
-Most schools run fees on registers, spreadsheets, and a WhatsApp group. Cash payments
-go unrecorded until someone remembers to write them down. A family with three
-children gets three separate reminders for what is really one household budget.
-And the families who fall behind often find out they're in trouble from a
-printed defaulter list on a noticeboard — the same day everyone else does.
+None of that is really a technology problem. It's a **dignity** problem.
+FeeBridge tries to fix both at once: catch a family before they default, help
+them quietly, and never make the school's books harder to keep than they
+already are.
 
-None of that is a technology problem so much as a **dignity** problem. FeeBridge
-tries to fix both at once: catch a family before they default, help them
-quietly, and never make the school's books harder to keep than they already are.
+## Contents
+
+- [What FeeBridge does](#what-feebridge-does)
+- [What's different about it](#whats-different-about-it)
+- [How it's built](#how-its-built)
+- [Run it locally](#run-it-locally)
+- [Connect a real Firebase project](#connect-a-real-firebase-project-optional)
+- [Honest notes](#honest-notes)
 
 ---
 
 ## What FeeBridge does
 
-**The office** — sees every rupee outstanding, a forecast of what will actually
-arrive (with an honest confidence range, not a fake-precise number), and which
-families are worth a quiet word before their due date — each one with the
-specific reasons behind the flag, visible on the card, never behind a tooltip.
+Three roles, one shared source of truth:
 
-**A parent** — one balance covering every child in the family, not one bill
-per kid. Pays by scanning a real UPI QR code, or by instalment if the office
-has offered a plan. Never sees a risk score — that stays office-only, on purpose.
-
-**The front desk** — takes cash and cheque as fast as a register, with the
-reconciliation engine matching each payment to the right invoice automatically
-(or flagging it for review, honestly, when it can't). Works completely offline;
-queued payments sync and reconcile themselves the moment the connection returns.
-
----
+| | Role | What they get |
+|---|---|---|
+| 🏫 | **The office** | Every rupee outstanding, a forecast of what will actually arrive (an honest range, not a fake-precise number), and which families are worth a quiet word before their due date — each one with the *specific reasons* behind the flag, right there on the card, never behind a tooltip. |
+| 👪 | **A parent** | One balance covering every child in the family, not one bill per kid. Pays by scanning a real UPI QR code, or by instalment if the office has offered a plan. Never sees a risk score — that stays office-only, on purpose. |
+| 🧾 | **The front desk** | Takes cash and cheque as fast as a paper register, with the reconciliation engine matching each payment to the right invoice automatically — or flagging it for review, honestly, when it can't. Works completely offline; queued payments sync and reconcile themselves the moment the connection returns. |
 
 ## What's different about it
 
-- **Explainable, not a black box.** The risk model is a logistic model with
-  hand-set (not trained) weights — see [Honest notes](#honest-notes) — but every
-  score ships with its top reasons attached. Nothing is flagged without saying why.
-- **Offline cash reconciliation that's actually tested.** Not a toast that says
-  "you're offline" — a real local write queue that flushes and reconciles the
-  moment the network returns, provable end to end.
-- **One family, one wallet.** The data model denormalises `familyId` onto every
-  invoice and payment specifically so "what does this family owe, in total" is
-  one query, not a join — a product decision made at the data layer, not patched
-  on in the UI.
-
----
+- 🔍 **Explainable, not a black box.** The risk model is a logistic model with
+  hand-set (not trained) weights — see [Honest notes](#honest-notes) — but
+  every score ships with its top reasons attached. Nothing is ever flagged
+  without saying why.
+- 📴 **Offline cash reconciliation that's actually tested.** Not a toast that
+  says "you're offline" — a real local write queue that flushes and reconciles
+  the moment the network returns, provable end to end, not just claimed.
+- 👨‍👩‍👧‍👦 **One family, one wallet.** The data model denormalises `familyId` onto
+  every invoice and payment specifically so "what does this family owe, in
+  total" is one query, not a join — a product decision made at the data layer,
+  not patched on in the UI afterwards.
 
 ## How it's built
 
@@ -99,36 +102,122 @@ no I/O — with **24 unit tests**, so the logic that actually matters can be
 verified without clicking through the UI. The UI never talks to Firestore
 directly; it only ever talks to a `Repository` interface, which is why the
 whole app runs instantly on seeded local data with zero setup, and swaps to
-real Firestore with a one-line change. See `docs/ARCHITECTURE.md` for the
-full write-up, including the security model and scalability notes.
+real Firestore with a one-line environment variable. See
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full write-up,
+including the security model and scalability notes.
 
-**Stack:** React + TypeScript + Vite, Tailwind, Zustand, Firebase (Auth +
-Firestore), Recharts, `qrcode.react`, Vitest, `vite-plugin-pwa`.
+**Stack:** React 18 + TypeScript + Vite · Tailwind CSS · Zustand · Firebase
+(Auth + Firestore) · Recharts · `qrcode.react` · Vitest · `vite-plugin-pwa`
 
 ---
 
 ## Run it locally
 
+### Prerequisites
+
+- **Node.js 18 or newer** ([nodejs.org](https://nodejs.org)) — check with `node -v`
+- No Python, no `requirements.txt` needed — this is a Node project, and
+  `package-lock.json` already pins every dependency to an exact version (the
+  JS equivalent of a requirements file). `npm install` reads it automatically.
+
+### Get it running — no Firebase needed
+
 ```bash
+git clone https://github.com/Sangupta03/FeeBridge.git
+cd FeeBridge/feebridge
 npm install
 npm run dev
 ```
 
-Open http://localhost:5173 and pick a role.
+Open **http://localhost:5173** and pick a role. That's it.
 
-**You do not need a Firebase project to run this.** The app ships with a seeded
-demo school (6 families, 9 students, real invoices and payments) behind the
-repository interface above, so it works instantly and offline. To point it at
-a real Firestore project instead, copy `.env.example` to `.env.local`, fill in
-your Firebase config, and set `VITE_DATA_SOURCE=firebase`.
+The app ships with a seeded demo school (6 families, 9 students, real
+invoices and payments) behind the repository interface described above, so it
+works instantly and fully offline — **you do not need a Firebase project to
+run or judge this app.**
 
 ```bash
-npm test              # run the 24 domain engine unit tests
+npm test              # run the 24 domain-engine unit tests
 npm run build          # production build (also generates the PWA service worker)
-npm run preview        # serve the production build locally
-npm run seed           # upload the demo school to a real Firestore project
-npm run seed:reset     # same, but first clears test payments/plans for a clean run
+npm run preview        # serve the production build locally, exactly as deployed
 ```
+
+---
+
+## Connect a real Firebase project *(optional)*
+
+Only needed if you want real multi-device sync instead of the seeded local
+demo. Budget about 15 minutes.
+
+**1. Create the project**
+Go to [console.firebase.google.com](https://console.firebase.google.com) →
+**Create a project** → name it (e.g. `feebridge`) → turn Google Analytics
+**off** (not needed) → Continue.
+
+**2. Turn on Firestore**
+Left sidebar → **Build → Firestore Database → Create database** → pick a
+region close to you → **Start in test mode** (you'll lock it down in step 6) →
+Enable.
+
+**3. Turn on Authentication**
+Left sidebar → **Build → Authentication → Get started** → under **Sign-in
+method**, enable **Email/Password**.
+
+**4. Get your web app config**
+**⚙️ Project settings** (gear icon, top left) → **Your apps** → click the web
+icon `</>` → nickname it anything → **don't** tick Firebase Hosting →
+**Register app**. Keep the `firebaseConfig` block visible — you'll need it next.
+
+**5. Set your environment variables**
+
+Copy `.env.example` to `.env.local` in the `feebridge/` folder and fill it in:
+
+```bash
+VITE_DATA_SOURCE=firebase
+
+VITE_FIREBASE_API_KEY=AIza...
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
+VITE_FIREBASE_APP_ID=1:123:web:abc
+
+# A real UPI VPA so the QR code is genuinely scannable (yours is fine — nobody is charged)
+VITE_SCHOOL_UPI_VPA=yourname@okaxis
+VITE_SCHOOL_NAME=Your School Name
+```
+
+`.env.local` is already in `.gitignore`, so your keys are never committed.
+
+**6. Seed the demo school and lock down the rules**
+
+```bash
+npm run seed
+```
+
+This uploads the seeded families, students, invoices and payments, and
+creates three sign-in accounts. Then, in the Firebase console: **Firestore
+Database → Rules** tab → paste the entire contents of `firestore.rules` over
+what's there → **Publish**.
+
+Restart the dev server (`Ctrl+C`, then `npm run dev`) and sign in with:
+
+| Role | Email | Password |
+|---|---|---|
+| Office | `office@feebridge.demo` | `feebridge123` |
+| Front desk | `desk@feebridge.demo` | `feebridge123` |
+| Parent | `parent@feebridge.demo` | `feebridge123` |
+
+**Testing in a loop?** Once you've made test payments and want a clean slate
+without re-doing the steps above:
+
+```bash
+npm run seed:reset     # clears test payments/plans, then reseeds fresh
+```
+
+**If anything goes wrong** — set `VITE_DATA_SOURCE=local` in `.env.local` and
+restart. The app falls back to the seeded local demo automatically; you lose
+nothing but multi-device sync.
 
 ---
 
@@ -137,22 +226,22 @@ npm run seed:reset     # same, but first clears test payments/plans for a clean 
 - The risk model's coefficients are **hand-set from domain reasoning, not
   trained**, because a new school has no payment history on day one. The shape
   is deliberately the same as a fitted logistic regression, so real weights can
-  drop in later without touching any UI. We say this openly rather than calling
-  it something it isn't.
-- We build **real UPI deep links** (`upi://pay` intents with the school's actual
-  VPA and the exact amount), which open correctly in any Indian payment app. We
-  do **not** settle money ourselves — that needs a verified merchant account,
-  which is a business-verification step, not an engineering one.
+  drop in later without touching any UI. We say this openly rather than
+  calling it something it isn't.
+- We build **real UPI deep links** (`upi://pay` intents with the school's
+  actual VPA and the exact amount), which open correctly in any Indian payment
+  app. We do **not** settle money ourselves — that needs a verified merchant
+  account, which is a business-verification step, not an engineering one.
 - The reconciliation engine matches one payment to one invoice, or a partial
   payment to the oldest open invoice. A single payment **larger than any one
   invoice** is deliberately routed to a human to split by hand, rather than
   guessed at automatically — the office's Needs Review screen supports
   splitting one payment across several invoices for exactly this case.
-- There's no credit-balance concept yet: if a payment is larger than everything
-  a family currently owes, the extra amount has nowhere to go inside the app.
-  That's a real, known limitation, not an oversight.
+- There's no credit-balance concept yet: if a payment is larger than
+  everything a family currently owes, the extra amount has nowhere to go
+  inside the app. That's a real, known limitation, not an oversight.
 
 ## Docs
 
-- `docs/ARCHITECTURE.md` — how it fits together, the data model, and the
-  security model, in more depth than fits here.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — how it fits together, the
+  data model, and the security model, in more depth than fits here.
