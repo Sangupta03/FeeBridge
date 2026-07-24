@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { DataSnapshot, Repository } from '../data/repository';
 import { createRepository } from '../data';
 import { signInAsRole, signOutUser, watchAuth } from '../lib/auth';
-import { isFirebaseConfigured } from '../lib/firebase';
+import { isFirebaseConfigured, getFirebase } from '../lib/firebase';
 import { seed } from '../data/seed';
 import { scoreFamily } from '../domain/risk';
 import { matchPayment, applyPayment, outstandingOf } from '../domain/reconcile';
@@ -99,6 +99,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { repo, subscribed } = get();
     if (subscribed) return;
     set({ subscribed: true });
+    // TEMPORARY - remove once the Firestore permission issue is confirmed fixed
+    if (isFirebaseConfigured) {
+      const { auth } = getFirebase();
+      console.log('[debug] connecting to Firestore. signed-in as:', auth?.currentUser?.uid, auth?.currentUser?.email);
+    }
     repo.subscribe((snapshot) => set({ data: snapshot, ready: true }));
   },
 
