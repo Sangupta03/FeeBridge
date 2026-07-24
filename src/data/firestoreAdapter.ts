@@ -1,0 +1,142 @@
+import {
+  collection, doc, onSnapshot, addDoc, updateDoc, setDoc,
+  disableNetwork, enableNetwork, type Firestore,
+} from 'firebase/firestore';
+import type { Repository, DataSnapshot } from './repository';
+import { getFirebase } from '../lib/firebase';
+import type {
+  AppUser, Family, FeeHead, InstallmentPlan, Invoice, Payment, Student,
+} from '../types';
+
+/**
+ * Firestore-backed repository.
+ *
+ * Same interface as LocalRepository, so nothing in the UI changes when you swap
+ * between them. Two things are worth pointing out:
+ *
+ * 1. `includeMetadataChanges: true` lets us see writes that are still queued on
+ *    the device. That is how the cash desk knows to show "3 waiting to sync".
+ * 2. `disableNetwork` / `enableNetwork` are the real Firestore APIs for going
+ *    offline. We are not faking the offline demo — we are switching the actual
+ *    client into offline mode, and Firestore's persistent cache does the rest.
+ */
+export class FirestoreRepository implements Repository {
+  private db: Firestore;
+  private state: DataSnapshot = {
+    families: [], students: [], invoices: [], payments: [],
+    feeHeads: [], plans: [], users: [], queuedWrites: 0, online: true,
+  };
+  private listeners = new Set<(s: DataSnapshot) => void>();
+  private unsubs: Array<() => void> = [];
+
+  constructor() {
+    const { db } = getFirebase();
+    if (!db) throw new Error('Firebase is not configured. Set VITE_FIREBASE_* in .env.local');
+    this.db = db;
+  }
+
+  private emit() {
+    const snapshot = { ...this.state };
+    this.listeners.forEach((l) => l(snapshot));
+  }
+
+  /** Listen to one collection and keep it in local state. */
+  private watch<T>(name: string, assign: (rows: T[]) => void, countPending = false) {
+    const unsub = onSnapshot(
+      collection(this.db, name),
+      { includeMetadataChanges: true },
+      (snap) => {
+        const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as T);
+        assign(rows);
+        if (countPending) {
+          this.state.queuedWrites = snap.docs.filter((d) => d.metadata.hasPendingWrites).length;
+        }
+        this.emit();
+      },
+      (err) => console.error(`[firestore] ${name} listener failed:`, err),
+    );
+    this.unsubs.push(unsub);
+  }
+
+  subscribe(onChange: (s: DataSnapshot) => void) {
+    this.listeners.add(onChange);
+
+    if (this.unsubs.length === 0) {
+      this.watch<Family>('families', (r) => { this.state.families = r; });
+      this.watch<Student>('students', (r) => { this.state.students = r; });
+      this.watch<Invoice>('invoices', (r) => { this.state.invoices = r; });
+      this.watch<Payment>('payments', (r) => {
+        // mark rows that have not reached the server yet
+        this.state.payments = r;
+      }, true);
+      this.watch<FeeHead>('feeHeads', (r) => { this.state.feeHeads = r; });
+      this.watch<InstallmentPlan>('plans', (r) => { this.state.plans = r; });
+      this.watch<AppUser>('users', (r) => { this.state.users = r; });
+    }
+
+    onChange(this.state);
+    return () => {
+      this.listeners.delete(onChange);
+    };
+  }
+
+  async addPayment(payment: Omit<Payment, 'id'>): Promise<Payment> {
+    // Note: we deliberately do NOT await this when offline - Firestore resolves
+    // the promise only once the server confirms. The local cache updates
+    // immediately, so the UI is already correct.
+    const ref = collection(this.db, 'payments');
+    const created = { ...payment } as Omit<Payment, 'id'>;
+    const docRef = await Promise.race([
+      addDoc(ref, created),
+      // if we are offline, addDoc never resolves; fall back after a tick
+      new Promise<null>((res) => setTimeout(() => res(null), 400)),
+    ]);
+    return { ...created, id: docRef?.id ?? `local-${Date.now()}` } as Payment;
+  }
+
+  async updateInvoice(invoice: Invoice): Promise<void> {
+    const { id, ...rest } = invoice;
+    await Promise.race([
+      updateDoc(doc(this.db, 'invoices', id), rest),
+      new Promise<void>((res) => setTimeout(res, 400)),
+    ]);
+  }
+
+  async savePlan(plan: Omit<InstallmentPlan, 'id'>): Promise<InstallmentPlan> {
+    const docRef = await Promise.race([
+      addDoc(collection(this.db, 'plans'), plan),
+      new Promise<null>((res) => setTimeout(() => res(null), 400)),
+    ]);
+    return { ...plan, id: docRef?.id ?? `local-${Date.now()}` } as InstallmentPlan;
+  }
+
+  async addFeeHead(fee: Omit<FeeHead, 'id'>): Promise<FeeHead> {
+    const docRef = await Promise.race([
+      addDoc(collection(this.db, 'feeHeads'), fee),
+      new Promise<null>((res) => setTimeout(() => res(null), 400)),
+    ]);
+    return { ...fee, id: docRef?.id ?? `local-${Date.now()}` } as FeeHead;
+  }
+
+  /** Real Firestore offline mode, not a simulation. */
+  async setOffline(offline: boolean) {
+    if (offline) {
+      await disableNetwork(this.db);
+      this.state.online = false;
+    } else {
+      await enableNetwork(this.db);
+      this.state.online = true;
+    }
+    this.emit();
+  }
+
+  /** Write a user profile document (role lookup for the security rules). */
+  async saveUser(user: AppUser) {
+    await setDoc(doc(this.db, 'users', user.uid), user, { merge: true });
+  }
+
+  dispose() {
+    this.unsubs.forEach((u) => u());
+    this.unsubs = [];
+  }
+}
