@@ -1,9 +1,8 @@
 import { useEffect } from 'react';
 import { useAppStore } from './store/useAppStore';
-import { inr, dueCopy } from './lib/format';
-import { outstandingOf } from './domain/reconcile';
 import type { Role } from './types';
 import OfficeDashboard from './features/admin';
+import ParentWallet from './features/parent';
 
 /**
  * Starter shell.
@@ -57,7 +56,7 @@ export default function App() {
 
       <main className="mx-auto max-w-6xl px-6 py-8">
         {user.role === 'admin' && <OfficeDashboard />}
-        {user.role === 'parent' && <ParentStarter />}
+        {user.role === 'parent' && <ParentWallet />}
         {user.role === 'clerk' && <ClerkStarter />}
       </main>
     </div>
@@ -86,42 +85,6 @@ function RolePicker({ onPick }: { onPick: (r: Role) => Promise<void> }) {
           ))}
         </div>
       </div>
-    </div>
-  );
-}
-
-function ParentStarter() {
-  const data = useAppStore((s) => s.data)!;
-  const user = useAppStore((s) => s.user)!;
-  const balance = useAppStore((s) => s.familyBalance(user.familyId!));
-  const kids = data.students.filter((s) => s.familyId === user.familyId);
-
-  return (
-    <div className="max-w-xl space-y-6">
-      <div className="card p-6">
-        <div className="label-caps">Your family balance</div>
-        <div className="mt-1 font-serif text-5xl font-bold text-ink">{inr(balance)}</div>
-        <div className="mt-1 text-sm text-muted">
-          Covering {kids.length} {kids.length === 1 ? 'child' : 'children'} · one payment
-        </div>
-      </div>
-      <div className="space-y-2">
-        {data.invoices
-          .filter((i) => i.familyId === user.familyId && outstandingOf(i) > 0)
-          .map((i) => {
-            const kid = data.students.find((s) => s.id === i.studentId);
-            return (
-              <div key={i.id} className="card-flat flex items-center justify-between p-4">
-                <div>
-                  <div className="font-semibold text-ink">{kid?.name}</div>
-                  <div className="text-sm text-muted">{i.title} · {dueCopy(i.dueDate)}</div>
-                </div>
-                <div className="font-semibold">{inr(outstandingOf(i))}</div>
-              </div>
-            );
-          })}
-      </div>
-      <p className="text-sm text-muted">Phase 3 adds the UPI QR code here.</p>
     </div>
   );
 }
