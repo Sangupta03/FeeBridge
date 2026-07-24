@@ -45,12 +45,36 @@ interface AppState {
     note?: string;
   }) => Promise<{ status: Payment['status']; reason: string }>;
   offerPlan: (invoiceId: string) => Promise<void>;
+  /** manually split a Needs Review payment across one or more of that family's invoices */
+  splitPayment: (paymentId: string, allocations: Array<{ invoiceId: string; amount: number }>) => Promise<void>;
   toggleOffline: () => void;
 
   // ---- derived
   riskProfiles: () => Record<string, FamilyRiskProfile>;
   openInvoices: () => Invoice[];
   familyBalance: (familyId: string) => number;
+}
+
+/**
+ * If an invoice being settled has an instalment plan against it, mark whichever
+ * part this amount pays off as paid. Shared by recordPayment() and
+ * splitPayment() so both reconciliation paths keep a plan's timeline honest.
+ */
+async function markPlanInstallmentPaid(
+  repo: Repository, data: DataSnapshot, invoiceId: string, amount: number,
+) {
+  const plan = data.plans.find((p) => p.invoiceId === invoiceId);
+  if (!plan) return;
+
+  const partIndex = plan.installments.findIndex(
+    (part) => !part.paid && Math.abs(part.amount - amount) <= 1,
+  );
+  if (partIndex < 0) return;
+
+  const installments = plan.installments.map((part, i) =>
+    i === partIndex ? { ...part, paid: true } : part,
+  );
+  await repo.updatePlan({ ...plan, installments });
 }
 
 /** Build the feature vector the risk model needs from raw data. */
@@ -153,20 +177,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (result.status === 'matched' && result.invoiceId) {
       const invoice = data.invoices.find((i) => i.id === result.invoiceId);
       if (invoice) await repo.updateInvoice(applyPayment(invoice, saved));
-
-      // if this payment settles part of an instalment plan, mark that part paid
-      const plan = data.plans.find((p) => p.invoiceId === result.invoiceId);
-      if (plan) {
-        const partIndex = plan.installments.findIndex(
-          (part) => !part.paid && Math.abs(part.amount - saved.amount) <= 1,
-        );
-        if (partIndex >= 0) {
-          const installments = plan.installments.map((part, i) =>
-            i === partIndex ? { ...part, paid: true } : part,
-          );
-          await repo.updatePlan({ ...plan, installments });
-        }
-      }
+      await markPlanInstallmentPaid(repo, data, result.invoiceId, saved.amount);
     }
 
     return { status: result.status, reason: result.reason };
@@ -194,6 +205,43 @@ export const useAppStore = create<AppState>((set, get) => ({
       installments,
       reason,
     });
+  },
+
+  splitPayment: async (paymentId, allocations) => {
+    const { repo, data } = get();
+    if (!data || allocations.length === 0) return;
+    const payment = data.payments.find((p) => p.id === paymentId);
+    if (!payment) return;
+
+    const [first, ...rest] = allocations;
+
+    // the original payment record settles the first invoice
+    const firstInvoice = data.invoices.find((i) => i.id === first.invoiceId);
+    const firstPortion = { ...payment, amount: first.amount, status: 'matched' as const, invoiceId: first.invoiceId };
+    await repo.updatePayment(firstPortion);
+    if (firstInvoice) await repo.updateInvoice(applyPayment(firstInvoice, firstPortion));
+    await markPlanInstallmentPaid(repo, data, first.invoiceId, first.amount);
+
+    // every other allocation becomes its own payment record, so each invoice
+    // ends up settled by a real, individually reconciled payment
+    for (const alloc of rest) {
+      const invoice = data.invoices.find((i) => i.id === alloc.invoiceId);
+      if (!invoice) continue;
+      const saved = await repo.addPayment({
+        familyId: payment.familyId,
+        studentId: invoice.studentId,
+        amount: alloc.amount,
+        method: payment.method,
+        reference: payment.reference,
+        note: `Split from payment ${payment.reference}`,
+        paidAt: payment.paidAt,
+        recordedBy: payment.recordedBy,
+        status: 'matched',
+        invoiceId: alloc.invoiceId,
+      });
+      await repo.updateInvoice(applyPayment(invoice, saved));
+      await markPlanInstallmentPaid(repo, data, alloc.invoiceId, alloc.amount);
+    }
   },
 
   toggleOffline: () => {

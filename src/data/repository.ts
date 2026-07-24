@@ -24,6 +24,7 @@ export interface Repository {
   subscribe(onChange: (snapshot: DataSnapshot) => void, context?: SubscribeContext): () => void;
 
   addPayment(payment: Omit<Payment, 'id'>): Promise<Payment>;
+  updatePayment(payment: Payment): Promise<void>;
   updateInvoice(invoice: Invoice): Promise<void>;
   savePlan(plan: Omit<InstallmentPlan, 'id'>): Promise<InstallmentPlan>;
   updatePlan(plan: InstallmentPlan): Promise<void>;

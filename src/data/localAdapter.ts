@@ -98,6 +98,12 @@ export class LocalRepository implements Repository {
     return created;
   }
 
+  async updatePayment(payment: Payment): Promise<void> {
+    this.write(() => {
+      this.state.payments = this.state.payments.map((p) => (p.id === payment.id ? payment : p));
+    });
+  }
+
   async updateInvoice(invoice: Invoice): Promise<void> {
     this.write(() => {
       this.state.invoices = this.state.invoices.map((i) => (i.id === invoice.id ? invoice : i));

@@ -8,6 +8,11 @@ import type {
   AppUser, Family, FeeHead, InstallmentPlan, Invoice, Payment, Student,
 } from '../types';
 
+/** Firestore rejects any field explicitly set to undefined - it must be left out entirely. */
+function stripUndefined<T extends object>(obj: T): T {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
+}
+
 /**
  * Firestore-backed repository.
  *
@@ -124,13 +129,21 @@ export class FirestoreRepository implements Repository {
     // the promise only once the server confirms. The local cache updates
     // immediately, so the UI is already correct.
     const ref = collection(this.db, 'payments');
-    const created = { ...payment } as Omit<Payment, 'id'>;
+    const created = stripUndefined({ ...payment }) as Omit<Payment, 'id'>;
     const docRef = await Promise.race([
       addDoc(ref, created),
       // if we are offline, addDoc never resolves; fall back after a tick
       new Promise<null>((res) => setTimeout(() => res(null), 400)),
     ]);
     return { ...created, id: docRef?.id ?? `local-${Date.now()}` } as Payment;
+  }
+
+  async updatePayment(payment: Payment): Promise<void> {
+    const { id, ...rest } = payment;
+    await Promise.race([
+      updateDoc(doc(this.db, 'payments', id), stripUndefined(rest)),
+      new Promise<void>((res) => setTimeout(res, 400)),
+    ]);
   }
 
   async updateInvoice(invoice: Invoice): Promise<void> {

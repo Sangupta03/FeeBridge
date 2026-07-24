@@ -3,6 +3,7 @@ import { useAppStore } from './store/useAppStore';
 import type { Role } from './types';
 import OfficeDashboard from './features/admin';
 import ParentWallet from './features/parent';
+import ClerkDesk from './features/clerk';
 
 /**
  * Starter shell.
@@ -59,7 +60,7 @@ export default function App() {
       <main className="mx-auto max-w-6xl px-6 py-8">
         {user.role === 'admin' && <OfficeDashboard />}
         {user.role === 'parent' && <ParentWallet />}
-        {user.role === 'clerk' && <ClerkStarter />}
+        {user.role === 'clerk' && <ClerkDesk />}
       </main>
     </div>
   );
@@ -87,24 +88,6 @@ function RolePicker({ onPick }: { onPick: (r: Role) => Promise<void> }) {
           ))}
         </div>
       </div>
-    </div>
-  );
-}
-
-function ClerkStarter() {
-  const data = useAppStore((s) => s.data)!;
-  const pending = data.payments.filter((p) => p.pending).length;
-  return (
-    <div className="max-w-xl space-y-4">
-      <div className="card p-6">
-        <h2 className="text-2xl font-bold">Cash desk</h2>
-        <p className="mt-1 text-sm text-body">
-          {data.online
-            ? 'Connected. Payments save straight away.'
-            : `Working offline. ${pending} payment${pending === 1 ? '' : 's'} waiting to sync.`}
-        </p>
-      </div>
-      <p className="text-sm text-muted">Phase 4 adds the cash entry form and Needs Review pile.</p>
     </div>
   );
 }

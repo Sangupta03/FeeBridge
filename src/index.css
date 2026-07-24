@@ -25,3 +25,10 @@
   .btn-ghost   { @apply btn border border-line text-ink hover:bg-paper2; }
   .label-caps  { @apply text-[10.5px] font-bold tracking-widest text-brand uppercase; }
 }
+
+/* Printing a receipt: hide everything on the page except the marked area. */
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { position: fixed; inset: 0; padding: 2rem; }
+}
