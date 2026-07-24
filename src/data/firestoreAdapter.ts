@@ -1,8 +1,8 @@
 import {
-  collection, doc, onSnapshot, addDoc, updateDoc, setDoc,
-  disableNetwork, enableNetwork, type Firestore,
+  collection, doc, query, where, onSnapshot, addDoc, updateDoc, setDoc,
+  disableNetwork, enableNetwork, type Firestore, type Query,
 } from 'firebase/firestore';
-import type { Repository, DataSnapshot } from './repository';
+import type { Repository, DataSnapshot, SubscribeContext } from './repository';
 import { getFirebase } from '../lib/firebase';
 import type {
   AppUser, Family, FeeHead, InstallmentPlan, Invoice, Payment, Student,
@@ -40,15 +40,22 @@ export class FirestoreRepository implements Repository {
     this.listeners.forEach((l) => l(snapshot));
   }
 
-  /** Listen to one collection and keep it in local state. */
-  private watch<T>(name: string, assign: (rows: T[]) => void, countPending = false) {
+  /** Listen to one collection (optionally filtered) and keep it in local state. */
+  private watch<T>(
+    name: string,
+    assign: (rows: T[]) => void,
+    options: { countPending?: boolean; familyId?: string } = {},
+  ) {
+    const ref: Query = options.familyId
+      ? query(collection(this.db, name), where('familyId', '==', options.familyId))
+      : collection(this.db, name);
     const unsub = onSnapshot(
-      collection(this.db, name),
+      ref,
       { includeMetadataChanges: true },
       (snap) => {
         const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as T);
         assign(rows);
-        if (countPending) {
+        if (options.countPending) {
           this.state.queuedWrites = snap.docs.filter((d) => d.metadata.hasPendingWrites).length;
         }
         this.emit();
@@ -58,26 +65,58 @@ export class FirestoreRepository implements Repository {
     this.unsubs.push(unsub);
   }
 
-  subscribe(onChange: (s: DataSnapshot) => void) {
+  subscribe(onChange: (s: DataSnapshot) => void, context?: SubscribeContext) {
     this.listeners.add(onChange);
 
     if (this.unsubs.length === 0) {
-      this.watch<Family>('families', (r) => { this.state.families = r; });
-      this.watch<Student>('students', (r) => { this.state.students = r; });
-      this.watch<Invoice>('invoices', (r) => { this.state.invoices = r; });
-      this.watch<Payment>('payments', (r) => {
-        // mark rows that have not reached the server yet
-        this.state.payments = r;
-      }, true);
-      this.watch<FeeHead>('feeHeads', (r) => { this.state.feeHeads = r; });
-      this.watch<InstallmentPlan>('plans', (r) => { this.state.plans = r; });
-      this.watch<AppUser>('users', (r) => { this.state.users = r; });
+      if (context?.role === 'parent' && context.familyId) {
+        this.watchOwnFamily(context.familyId);
+      } else {
+        // admin and clerk both pass a data-independent branch of every rule
+        // (isAdmin()/isClerk()), so Firestore can prove an unfiltered list is
+        // safe and allows it
+        this.watch<Family>('families', (r) => { this.state.families = r; });
+        this.watch<Student>('students', (r) => { this.state.students = r; });
+        this.watch<Invoice>('invoices', (r) => { this.state.invoices = r; });
+        this.watch<Payment>('payments', (r) => { this.state.payments = r; }, { countPending: true });
+        this.watch<FeeHead>('feeHeads', (r) => { this.state.feeHeads = r; });
+        this.watch<InstallmentPlan>('plans', (r) => { this.state.plans = r; });
+        this.watch<AppUser>('users', (r) => { this.state.users = r; });
+      }
     }
 
     onChange(this.state);
     return () => {
       this.listeners.delete(onChange);
     };
+  }
+
+  /**
+   * A parent's security rule only has the resource.data.familyId == myFamily()
+   * branch - a data-dependent condition. Firestore refuses to run an unfiltered
+   * list against a rule like that, so every query here is scoped to this one
+   * family up front, matching what the rule actually allows.
+   */
+  private watchOwnFamily(familyId: string) {
+    const famUnsub = onSnapshot(
+      doc(this.db, 'families', familyId),
+      (snap) => {
+        this.state.families = snap.exists() ? [{ id: snap.id, ...snap.data() } as Family] : [];
+        this.emit();
+      },
+      (err) => console.error('[firestore] families listener failed:', err),
+    );
+    this.unsubs.push(famUnsub);
+
+    this.watch<Student>('students', (r) => { this.state.students = r; }, { familyId });
+    this.watch<Invoice>('invoices', (r) => { this.state.invoices = r; }, { familyId });
+    this.watch<Payment>('payments', (r) => { this.state.payments = r; }, { countPending: true, familyId });
+    this.watch<InstallmentPlan>('plans', (r) => { this.state.plans = r; }, { familyId });
+    // feeHeads only requires signedIn(), so an unfiltered list already works
+    this.watch<FeeHead>('feeHeads', (r) => { this.state.feeHeads = r; });
+    // the parent UI never reads data.users, and its own rule needs a per-uid
+    // check this app has no matching query for - skip it rather than list a
+    // collection this role can't see
   }
 
   async addPayment(payment: Omit<Payment, 'id'>): Promise<Payment> {

@@ -1,5 +1,5 @@
 import type {
-  Family, Student, Invoice, Payment, FeeHead, InstallmentPlan, AppUser,
+  Family, Student, Invoice, Payment, FeeHead, InstallmentPlan, AppUser, Role,
 } from '../types';
 
 /**
@@ -12,9 +12,16 @@ import type {
  *
  * This is the "clean backend integration" part of the architecture.
  */
+
+/** Who's asking - lets a repository scope its reads to what that role can see. */
+export interface SubscribeContext {
+  role: Role;
+  familyId?: string;
+}
+
 export interface Repository {
   /** stream everything the current user is allowed to see */
-  subscribe(onChange: (snapshot: DataSnapshot) => void): () => void;
+  subscribe(onChange: (snapshot: DataSnapshot) => void, context?: SubscribeContext): () => void;
 
   addPayment(payment: Omit<Payment, 'id'>): Promise<Payment>;
   updateInvoice(invoice: Invoice): Promise<void>;
