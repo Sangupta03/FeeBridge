@@ -48,8 +48,9 @@ export function PaymentForm({ student, onRecorded }: PaymentFormProps) {
   return (
     <div className="card space-y-4 p-5">
       <div>
-        <label className="label-caps">Amount</label>
+        <label htmlFor="pf-amount" className="label-caps">Amount</label>
         <input
+          id="pf-amount"
           type="number"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
@@ -60,8 +61,9 @@ export function PaymentForm({ student, onRecorded }: PaymentFormProps) {
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="label-caps">Method</label>
+          <label htmlFor="pf-method" className="label-caps">Method</label>
           <select
+            id="pf-method"
             value={method}
             onChange={(e) => setMethod(e.target.value as Payment['method'])}
             className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink"
@@ -70,8 +72,9 @@ export function PaymentForm({ student, onRecorded }: PaymentFormProps) {
           </select>
         </div>
         <div>
-          <label className="label-caps">Reference</label>
+          <label htmlFor="pf-reference" className="label-caps">Reference</label>
           <input
+            id="pf-reference"
             value={reference}
             onChange={(e) => setReference(e.target.value)}
             placeholder={method === 'cash' ? 'Receipt no.' : 'Cheque no.'}
@@ -81,8 +84,9 @@ export function PaymentForm({ student, onRecorded }: PaymentFormProps) {
       </div>
 
       <div>
-        <label className="label-caps">Note (optional)</label>
+        <label htmlFor="pf-note" className="label-caps">Note (optional)</label>
         <input
+          id="pf-note"
           value={note}
           onChange={(e) => setNote(e.target.value)}
           className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink"

@@ -6,3 +6,8 @@ dist-ssr
 *.local
 .DS_Store
 coverage
+
+# internal build planning docs - not for judges; ARCHITECTURE.md is the one
+# real technical artifact worth keeping public
+docs/*
+!docs/ARCHITECTURE.md

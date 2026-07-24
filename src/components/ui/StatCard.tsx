@@ -14,7 +14,7 @@ export function StatCard({ label, value, hint, icon: Icon }: StatCardProps) {
       <div className="flex items-center gap-2">
         {Icon && (
           <span className="grid h-7 w-7 place-items-center rounded-full bg-mint text-brand-dark">
-            <Icon size={15} strokeWidth={2.25} />
+            <Icon size={15} strokeWidth={2.25} aria-hidden="true" />
           </span>
         )}
         <div className="label-caps">{label}</div>

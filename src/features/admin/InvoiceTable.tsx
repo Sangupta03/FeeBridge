@@ -49,15 +49,16 @@ export function InvoiceTable() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-2xl font-bold">Invoices</h2>
         <div className="flex flex-wrap gap-2">
-          <Select value={classFilter} onChange={setClassFilter} label="All classes" options={classes} />
+          <Select ariaLabel="Filter by class" value={classFilter} onChange={setClassFilter} label="All classes" options={classes} />
           <Select
+            ariaLabel="Filter by status"
             value={statusFilter}
             onChange={setStatusFilter}
             label="All statuses"
             options={Object.keys(STATUS_LABEL)}
             display={(v) => STATUS_LABEL[v as InvoiceStatus]}
           />
-          <Select value={termFilter} onChange={setTermFilter} label="All terms" options={terms} />
+          <Select ariaLabel="Filter by term" value={termFilter} onChange={setTermFilter} label="All terms" options={terms} />
         </div>
       </div>
 
@@ -102,15 +103,17 @@ export function InvoiceTable() {
   );
 }
 
-function Select({ value, onChange, label, options, display }: {
+function Select({ value, onChange, label, options, display, ariaLabel }: {
   value: string;
   onChange: (v: string) => void;
   label: string;
   options: string[];
   display?: (v: string) => string;
+  ariaLabel: string;
 }) {
   return (
     <select
+      aria-label={ariaLabel}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className="rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink"

@@ -113,6 +113,7 @@ function ReviewRow({ payment }: { payment: Payment }) {
                 </div>
                 <input
                   type="number"
+                  aria-label={`Amount to allocate to ${inv.title}`}
                   value={allocations[inv.id] ?? 0}
                   onChange={(e) => setAmount(inv.id, Number(e.target.value))}
                   className="w-28 rounded-lg border border-line bg-white px-2 py-1 text-right text-sm text-ink"

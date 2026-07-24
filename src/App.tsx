@@ -57,30 +57,41 @@ export default function App() {
   return (
     <div className="min-h-screen">
       <header className="border-b border-line bg-white/70 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <span className="grid h-9 w-9 place-items-center rounded-full bg-brand text-cream">
-              <GraduationCap size={18} strokeWidth={2.25} />
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3 sm:px-6 sm:py-4">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <span className="grid h-8 w-8 flex-none place-items-center rounded-full bg-brand text-cream sm:h-9 sm:w-9">
+              <GraduationCap size={16} strokeWidth={2.25} />
             </span>
-            <div>
-              <div className="font-serif text-xl font-bold text-ink">FeeBridge</div>
-              <div className="text-xs text-muted">Green Valley School · Term 2 2026</div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="truncate font-serif text-base font-bold text-ink sm:text-xl">FeeBridge</span>
+                <span
+                  className="hidden flex-none rounded-full bg-paper2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted sm:inline"
+                  title="This school and its data are seeded for the demo, not real"
+                >
+                  Demo data
+                </span>
+              </div>
+              <div className="hidden text-xs text-muted sm:block">Green Valley School · Term 2 2026</div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-none items-center gap-2 sm:gap-3">
             <button
               onClick={toggleOffline}
-              className={data.online ? 'btn-ghost gap-1.5' : 'btn gap-1.5 bg-terra text-white'}
+              className={data.online ? 'btn-ghost gap-1.5 px-2 sm:px-4' : 'btn gap-1.5 bg-terra px-2 text-white sm:px-4'}
               title="Demo: pretend the internet went away"
+              aria-label={data.online ? 'Online. Click to simulate going offline.' : `Offline, ${data.queuedWrites} queued. Click to reconnect.`}
             >
-              {data.online ? <Wifi size={14} /> : <WifiOff size={14} />}
-              {data.online ? 'Online' : `Offline · ${data.queuedWrites} queued`}
+              {data.online ? <Wifi size={14} aria-hidden="true" /> : <WifiOff size={14} aria-hidden="true" />}
+              <span className="hidden sm:inline">
+                {data.online ? 'Online' : `Offline · ${data.queuedWrites} queued`}
+              </span>
             </button>
-            <div className="text-right">
+            <div className="hidden text-right sm:block">
               <div className="text-sm font-semibold text-ink">{user.name}</div>
               <div className="text-xs capitalize text-muted">{user.role}</div>
             </div>
-            <button onClick={signOut} className="btn-ghost">Switch</button>
+            <button onClick={signOut} className="btn-ghost px-2 sm:px-4">Switch</button>
           </div>
         </div>
       </header>
@@ -97,7 +108,7 @@ export default function App() {
 function RolePicker({ onPick }: { onPick: (r: Role) => Promise<void> }) {
   return (
     <div className="min-h-screen px-6 pt-16 sm:pt-24">
-      <div className="mx-auto w-full max-w-3xl">
+      <div className="mx-auto w-full max-w-6xl">
         <div className="flex items-center gap-3">
           <span className="grid h-12 w-12 place-items-center rounded-full bg-brand text-cream">
             <GraduationCap size={24} strokeWidth={2.25} />

@@ -34,17 +34,17 @@ export default function OfficeDashboard() {
 
   return (
     <div className="space-y-8">
-      <div className="flex gap-2 border-b border-line">
-        <TabButton active={tab === 'overview'} onClick={() => setTab('overview')}>Overview</TabButton>
-        <TabButton active={tab === 'invoices'} onClick={() => setTab('invoices')}>Invoices</TabButton>
-        <TabButton active={tab === 'plans'} onClick={() => setTab('plans')}>Plans offered</TabButton>
-        <TabButton active={tab === 'review'} onClick={() => setTab('review')}>
+      <div role="tablist" aria-label="Office dashboard sections" className="flex gap-2 border-b border-line">
+        <TabButton id="overview" active={tab === 'overview'} onClick={() => setTab('overview')}>Overview</TabButton>
+        <TabButton id="invoices" active={tab === 'invoices'} onClick={() => setTab('invoices')}>Invoices</TabButton>
+        <TabButton id="plans" active={tab === 'plans'} onClick={() => setTab('plans')}>Plans offered</TabButton>
+        <TabButton id="review" active={tab === 'review'} onClick={() => setTab('review')}>
           {`Needs review${reviewCount > 0 ? ` · ${reviewCount}` : ''}`}
         </TabButton>
       </div>
 
       {tab === 'overview' && (
-        <div className="space-y-8">
+        <div role="tabpanel" aria-labelledby="tab-overview" className="space-y-8">
           <StatsRow atRiskCount={atRisk.length} />
           <FamiliesAtRisk profiles={atRisk} onOfferPlan={setPlanInvoiceId} />
           <div className="grid gap-4 lg:grid-cols-2">
@@ -55,9 +55,9 @@ export default function OfficeDashboard() {
           </div>
         </div>
       )}
-      {tab === 'invoices' && <InvoiceTable />}
-      {tab === 'plans' && <PlansTab />}
-      {tab === 'review' && <NeedsReview />}
+      {tab === 'invoices' && <div role="tabpanel" aria-labelledby="tab-invoices"><InvoiceTable /></div>}
+      {tab === 'plans' && <div role="tabpanel" aria-labelledby="tab-plans"><PlansTab /></div>}
+      {tab === 'review' && <div role="tabpanel" aria-labelledby="tab-review"><NeedsReview /></div>}
 
       {planInvoiceId && (
         <OfferPlanModal invoiceId={planInvoiceId} onClose={() => setPlanInvoiceId(null)} />
@@ -66,9 +66,14 @@ export default function OfficeDashboard() {
   );
 }
 
-function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: string }) {
+function TabButton({ id, active, onClick, children }: {
+  id: string; active: boolean; onClick: () => void; children: string;
+}) {
   return (
     <button
+      id={`tab-${id}`}
+      role="tab"
+      aria-selected={active}
       onClick={onClick}
       className={
         active

@@ -20,7 +20,9 @@ export function StudentPicker({ selected, onSelect }: StudentPickerProps) {
           <div className="font-semibold text-ink">{selected.name}</div>
           <div className="text-sm text-muted">{selected.className} · {family?.name}</div>
         </div>
-        <button className="btn-ghost" onClick={() => onSelect(null)}>Change</button>
+        <button className="btn-ghost" onClick={() => onSelect(null)} aria-label="Change selected student">
+          Change
+        </button>
       </div>
     );
   }
@@ -36,6 +38,7 @@ export function StudentPicker({ selected, onSelect }: StudentPickerProps) {
   return (
     <div>
       <input
+        aria-label="Search for a student by name, roll number or class"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search by student name, roll no. or class…"
