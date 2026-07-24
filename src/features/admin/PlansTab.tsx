@@ -1,5 +1,7 @@
+import { ClipboardList } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { inr, shortDate, dueCopy } from '../../lib/format';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 /**
  * Every instalment plan ever offered, newest first: who it's for, why it was
@@ -21,7 +23,11 @@ export function PlansTab() {
 
       <div className="mt-4 space-y-3">
         {plans.length === 0 && (
-          <p className="text-sm text-muted">No plans offered yet.</p>
+          <EmptyState
+            icon={ClipboardList}
+            title="No plans offered yet"
+            hint="When a family is offered a fairer way to pay, it'll show up here with the full schedule."
+          />
         )}
         {plans.map((plan) => {
           const family = data.families.find((f) => f.id === plan.familyId);

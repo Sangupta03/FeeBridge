@@ -1,3 +1,4 @@
+import { Wallet, TrendingUp, HeartHandshake, PieChart } from 'lucide-react';
 import { useAppStore, useForecast } from '../../store/useAppStore';
 import { inrShort } from '../../lib/format';
 import { StatCard } from '../../components/ui/StatCard';
@@ -17,14 +18,16 @@ export function StatsRow({ atRiskCount }: StatsRowProps) {
 
   return (
     <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <StatCard label="Outstanding this term" value={inrShort(forecast.totalOutstanding)} />
+      <StatCard icon={Wallet} label="Outstanding this term" value={inrShort(forecast.totalOutstanding)} />
       <StatCard
+        icon={TrendingUp}
         label="Expected to come in"
         value={inrShort(forecast.expected)}
         hint={`${Math.round(forecast.confidence * 100)}% confidence · ${inrShort(forecast.low)}–${inrShort(forecast.high)}`}
       />
-      <StatCard label="Families needing help" value={String(atRiskCount)} />
+      <StatCard icon={HeartHandshake} label="Families needing help" value={String(atRiskCount)} />
       <StatCard
+        icon={PieChart}
         label="Collection rate"
         value={`${collectionRate}%`}
         hint={`${inrShort(totalPaid)} of ${inrShort(totalDue)} billed`}

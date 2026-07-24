@@ -1,5 +1,7 @@
+import { Inbox } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { inr, shortDate } from '../../lib/format';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 const STATUS_TONE: Record<string, string> = {
   matched: 'bg-mint text-brand-dark',
@@ -24,7 +26,9 @@ export function RecentPayments() {
     <section>
       <h2 className="text-lg font-bold">Recent payments</h2>
       <div className="mt-3 space-y-2">
-        {recent.length === 0 && <p className="text-sm text-muted">Nothing recorded yet.</p>}
+        {recent.length === 0 && (
+          <EmptyState icon={Inbox} title="Nothing recorded yet" hint="Payments taken at the desk will appear here as soon as you save one." />
+        )}
         {recent.map((p) => {
           const student = data.students.find((s) => s.id === p.studentId);
           return (

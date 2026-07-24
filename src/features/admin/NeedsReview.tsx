@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { CheckCircle2 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { inr, shortDate } from '../../lib/format';
 import { outstandingOf } from '../../domain/reconcile';
+import { EmptyState } from '../../components/ui/EmptyState';
 import type { Payment, Invoice } from '../../types';
 
 /** Payments the reconciliation engine could not place - the office splits them by hand. */
@@ -23,7 +25,11 @@ export function NeedsReview() {
 
       <div className="mt-4 space-y-3">
         {review.length === 0 && (
-          <p className="text-sm text-muted">Nothing needs review right now.</p>
+          <EmptyState
+            icon={CheckCircle2}
+            title="Nothing needs review right now"
+            hint="Every payment has settled cleanly against an invoice. Unmatched ones will land here."
+          />
         )}
         {review.map((payment) => (
           <ReviewRow key={payment.id} payment={payment} />

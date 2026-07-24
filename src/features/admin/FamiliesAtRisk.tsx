@@ -1,8 +1,10 @@
+import { CheckCircle2, CalendarClock } from 'lucide-react';
 import type { FamilyRiskProfile } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { dueCopy } from '../../lib/format';
 import { outstandingOf } from '../../domain/reconcile';
 import { bandCopy } from '../../domain/risk';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 interface FamiliesAtRiskProps {
   /** already filtered to non-healthy and sorted by score ascending */
@@ -22,7 +24,11 @@ export function FamiliesAtRisk({ profiles, onOfferPlan }: FamiliesAtRiskProps) {
       </p>
       <div className="mt-4 space-y-3">
         {profiles.length === 0 && (
-          <p className="text-sm text-muted">No families need a nudge right now.</p>
+          <EmptyState
+            icon={CheckCircle2}
+            title="No families need a nudge right now"
+            hint="Every family is on track. New flags appear here as soon as they're worth a quiet word."
+          />
         )}
         {profiles.map((p) => {
           const fam = data.families.find((f) => f.id === p.familyId)!;
@@ -52,6 +58,7 @@ export function FamiliesAtRisk({ profiles, onOfferPlan }: FamiliesAtRiskProps) {
                   </span>
                   {invoice && (
                     <button className="btn-primary" onClick={() => onOfferPlan(invoice.id)}>
+                      <CalendarClock size={15} />
                       Offer a plan
                     </button>
                   )}

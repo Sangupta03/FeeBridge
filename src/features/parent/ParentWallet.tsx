@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { QrCode, CheckCircle2, GraduationCap } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { inr } from '../../lib/format';
 import { outstandingOf } from '../../domain/reconcile';
@@ -56,10 +57,14 @@ export default function ParentWallet() {
             className="btn-primary mt-4 w-full"
             onClick={() => setPay({ amount: balance, label: 'Family balance' })}
           >
+            <QrCode size={16} />
             Pay now
           </button>
         ) : (
-          <p className="mt-4 text-sm text-muted">You're all settled up.</p>
+          <div className="mt-4 flex items-center justify-center gap-2 text-sm font-semibold text-brand-dark">
+            <CheckCircle2 size={16} />
+            You're all settled up
+          </div>
         )}
       </div>
 
@@ -70,9 +75,14 @@ export default function ParentWallet() {
             .reduce((sum, i) => sum + outstandingOf(i), 0);
           return (
             <div key={kid.id} className="card-flat flex items-center justify-between p-4">
-              <div>
-                <div className="font-semibold text-ink">{kid.name}</div>
-                <div className="text-sm text-muted">{kid.className}</div>
+              <div className="flex items-center gap-3">
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-mint text-brand-dark">
+                  <GraduationCap size={16} />
+                </span>
+                <div>
+                  <div className="font-semibold text-ink">{kid.name}</div>
+                  <div className="text-sm text-muted">{kid.className}</div>
+                </div>
               </div>
               <div className="font-semibold text-ink">{inr(owed)}</div>
             </div>

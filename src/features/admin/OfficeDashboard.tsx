@@ -6,6 +6,8 @@ import { InvoiceTable } from './InvoiceTable';
 import { OfferPlanModal } from './OfferPlanModal';
 import { PlansTab } from './PlansTab';
 import { NeedsReview } from './NeedsReview';
+import { OutstandingByClassChart } from './OutstandingByClassChart';
+import { CollectionTrendChart } from './CollectionTrendChart';
 
 type Tab = 'overview' | 'invoices' | 'plans' | 'review';
 
@@ -43,6 +45,10 @@ export default function OfficeDashboard() {
         <div className="space-y-8">
           <StatsRow atRiskCount={atRisk.length} />
           <FamiliesAtRisk profiles={atRisk} onOfferPlan={setPlanInvoiceId} />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <OutstandingByClassChart />
+            <CollectionTrendChart />
+          </div>
         </div>
       )}
       {tab === 'invoices' && <InvoiceTable />}

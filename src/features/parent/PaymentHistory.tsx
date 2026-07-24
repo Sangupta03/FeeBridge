@@ -1,5 +1,7 @@
+import { Receipt } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { inr, shortDate } from '../../lib/format';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 const STATUS_COPY: Record<string, string> = {
   matched: 'Received',
@@ -19,7 +21,7 @@ export function PaymentHistory({ familyId }: PaymentHistoryProps) {
     .sort((a, b) => +new Date(b.paidAt) - +new Date(a.paidAt));
 
   if (payments.length === 0) {
-    return <p className="text-sm text-muted">No payments yet.</p>;
+    return <EmptyState icon={Receipt} title="No payments yet" hint="Once you pay, receipts will show up here." />;
   }
 
   return (

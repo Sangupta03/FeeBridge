@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
+import { FileX } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { inr, shortDate } from '../../lib/format';
 import { outstandingOf } from '../../domain/reconcile';
+import { EmptyState } from '../../components/ui/EmptyState';
 import type { InvoiceStatus } from '../../types';
 
 const STATUS_LABEL: Record<InvoiceStatus, string> = {
@@ -88,8 +90,8 @@ export function InvoiceTable() {
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-muted">
-                  No invoices match these filters.
+                <td colSpan={6}>
+                  <EmptyState icon={FileX} title="No invoices match these filters" hint="Try clearing one of the filters above." />
                 </td>
               </tr>
             )}

@@ -19,8 +19,10 @@ export default {
         cream: '#F3EDE1',
       },
       fontFamily: {
-        serif: ['Georgia', 'Cambria', 'serif'],
-        sans: ['Inter', 'Segoe UI', 'system-ui', 'sans-serif'],
+        // Fraunces has real warmth at display sizes - a kinder headline face
+        // than the usual AI-default serif, self-hosted so it's PWA-cached.
+        serif: ['Fraunces', 'Georgia', 'Cambria', 'serif'],
+        sans: ['Public Sans', 'Segoe UI', 'system-ui', 'sans-serif'],
       },
       borderRadius: { card: '10px' },
       boxShadow: { card: '0 3px 8px rgba(110,102,86,0.14)' },

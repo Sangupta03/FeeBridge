@@ -2,10 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Self-hosted so the PWA precaches them - no font request after the first visit. */
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/fraunces-variable.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Public Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/public-sans-variable.woff2') format('woff2');
+}
+
 @layer base {
   html { -webkit-tap-highlight-color: transparent; }
   body {
     @apply bg-paper text-body font-sans antialiased;
+    /* soft ambient warmth behind every screen, so empty paper never reads as
+       forgotten - subtle enough that no text ever sits directly against it */
+    background-image:
+      radial-gradient(700px circle at 10% -10%, rgba(27, 107, 84, 0.07), transparent 60%),
+      radial-gradient(600px circle at 100% 10%, rgba(197, 106, 69, 0.05), transparent 55%),
+      radial-gradient(800px circle at 45% 115%, rgba(27, 107, 84, 0.05), transparent 60%);
+    background-attachment: fixed;
   }
   h1, h2, h3 { @apply font-serif text-ink; }
 }
