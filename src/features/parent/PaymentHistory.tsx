@@ -21,7 +21,13 @@ export function PaymentHistory({ familyId }: PaymentHistoryProps) {
     .sort((a, b) => +new Date(b.paidAt) - +new Date(a.paidAt));
 
   if (payments.length === 0) {
-    return <EmptyState icon={Receipt} title="No payments yet" hint="Once you pay, receipts will show up here." />;
+    return (
+      <EmptyState
+        icon={Receipt}
+        title="Nothing paid yet this term"
+        hint="Every payment you make - in full or by instalment - lands here as a receipt you can look back on."
+      />
+    );
   }
 
   return (

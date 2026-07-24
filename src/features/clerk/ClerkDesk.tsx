@@ -4,6 +4,7 @@ import { StudentPicker } from './StudentPicker';
 import { PaymentForm } from './PaymentForm';
 import { ReceiptView } from './ReceiptView';
 import { RecentPayments } from './RecentPayments';
+import { TodayAtDesk } from './TodayAtDesk';
 import type { Student, Payment } from '../../types';
 
 interface RecordedPayment {
@@ -45,42 +46,54 @@ export default function ClerkDesk() {
   }
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
-      <div className="card p-5">
-        <h2 className="text-xl font-bold">Cash desk</h2>
-        <p className="mt-1 text-sm text-body">
-          {data.online
-            ? 'Connected. Payments save straight away.'
-            : `Working offline. ${pendingCount} payment${pendingCount === 1 ? '' : 's'} waiting to sync.`}
-        </p>
-      </div>
+    <div className="mx-auto max-w-xl space-y-6 lg:max-w-5xl">
+      <TodayAtDesk />
 
-      <div>
-        <label className="label-caps">Student</label>
-        <div className="mt-2">
-          <StudentPicker key={pickerKey} selected={student} onSelect={setStudent} />
-        </div>
-      </div>
-
-      {student && !recorded && (
-        <PaymentForm
-          student={student}
-          onRecorded={(result) => setRecorded({ student, paidAt: new Date().toISOString(), ...result })}
-        />
-      )}
-
-      {recorded && (
-        <div className="card p-5">
-          <span className={`rounded-full px-3 py-1 text-xs font-bold ${STATUS_COPY[recorded.status].tone}`}>
-            {STATUS_COPY[recorded.status].label}
-          </span>
-          <p className="mt-2 text-sm text-body">{recorded.reason}</p>
-          <div className="mt-4 flex gap-2">
-            <button className="btn-primary" onClick={() => setShowReceipt(true)}>View receipt</button>
-            <button className="btn-ghost" onClick={startNext}>Next payment</button>
+      {/* narrow and stacked on a phone; a clerk at a real desk gets two columns -
+          new payment on the left, what just happened on the right */}
+      <div className="lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:items-start lg:gap-6">
+        <div className="space-y-6">
+          <div className="card p-5">
+            <h2 className="text-xl font-bold">Cash desk</h2>
+            <p className="mt-1 text-sm text-body">
+              {data.online
+                ? 'Connected. Payments save straight away.'
+                : `Working offline. ${pendingCount} payment${pendingCount === 1 ? '' : 's'} waiting to sync.`}
+            </p>
           </div>
+
+          <div>
+            <label className="label-caps">Student</label>
+            <div className="mt-2">
+              <StudentPicker key={pickerKey} selected={student} onSelect={setStudent} />
+            </div>
+          </div>
+
+          {student && !recorded && (
+            <PaymentForm
+              student={student}
+              onRecorded={(result) => setRecorded({ student, paidAt: new Date().toISOString(), ...result })}
+            />
+          )}
+
+          {recorded && (
+            <div className="card p-5">
+              <span className={`rounded-full px-3 py-1 text-xs font-bold ${STATUS_COPY[recorded.status].tone}`}>
+                {STATUS_COPY[recorded.status].label}
+              </span>
+              <p className="mt-2 text-sm text-body">{recorded.reason}</p>
+              <div className="mt-4 flex gap-2">
+                <button className="btn-primary" onClick={() => setShowReceipt(true)}>View receipt</button>
+                <button className="btn-ghost" onClick={startNext}>Next payment</button>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+
+        <div className="mt-6 lg:mt-0">
+          <RecentPayments />
+        </div>
+      </div>
 
       {showReceipt && recorded && (
         <ReceiptView
@@ -93,8 +106,6 @@ export default function ClerkDesk() {
           onClose={() => setShowReceipt(false)}
         />
       )}
-
-      <RecentPayments />
     </div>
   );
 }

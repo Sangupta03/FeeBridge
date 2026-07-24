@@ -90,6 +90,10 @@ export const payments: Payment[] = [
   { id: 'pay-4', familyId: 'fam-khan',   studentId: 'stu-zoya',  invoiceId: 'inv-4',  amount: 3000, method: 'cheque', reference: 'CHQ-55120', paidAt: iso(-20), recordedBy: 'clerk-1', status: 'matched' },
   // one that could not be matched - shows the Needs Review pile is real
   { id: 'pay-5', familyId: 'fam-verma',  amount: 12000, method: 'cheque', reference: 'CHQ-55133', paidAt: iso(-2), recordedBy: 'clerk-1', status: 'review', note: 'Larger than any single open invoice' },
+  // Sharma is the hero story - give them real history from Term 1, so their own
+  // wallet isn't empty even though every Term 2 invoice is still unpaid
+  { id: 'pay-6', familyId: 'fam-sharma', studentId: 'stu-aarav', amount: 9000, method: 'upi',    reference: 'UPI-7701', paidAt: iso(-95), recordedBy: 'parent', status: 'matched' },
+  { id: 'pay-7', familyId: 'fam-sharma', studentId: 'stu-diya',  amount: 9000, method: 'cheque', reference: 'CHQ-7702', paidAt: iso(-93), recordedBy: 'parent', status: 'matched' },
 ];
 
 export const users: AppUser[] = [

@@ -96,8 +96,8 @@ export default function App() {
 
 function RolePicker({ onPick }: { onPick: (r: Role) => Promise<void> }) {
   return (
-    <div className="grid min-h-screen place-items-center px-6">
-      <div className="w-full max-w-3xl">
+    <div className="min-h-screen px-6 pt-16 sm:pt-24">
+      <div className="mx-auto w-full max-w-3xl">
         <div className="flex items-center gap-3">
           <span className="grid h-12 w-12 place-items-center rounded-full bg-brand text-cream">
             <GraduationCap size={24} strokeWidth={2.25} />

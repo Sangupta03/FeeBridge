@@ -8,6 +8,8 @@ import { PlansTab } from './PlansTab';
 import { NeedsReview } from './NeedsReview';
 import { OutstandingByClassChart } from './OutstandingByClassChart';
 import { CollectionTrendChart } from './CollectionTrendChart';
+import { PaymentMethodChart } from './PaymentMethodChart';
+import { ForecastCard } from './ForecastCard';
 
 type Tab = 'overview' | 'invoices' | 'plans' | 'review';
 
@@ -48,6 +50,8 @@ export default function OfficeDashboard() {
           <div className="grid gap-4 lg:grid-cols-2">
             <OutstandingByClassChart />
             <CollectionTrendChart />
+            <PaymentMethodChart />
+            <ForecastCard />
           </div>
         </div>
       )}

@@ -121,6 +121,8 @@ const payments = [
   { id: 'pay-3', familyId: 'fam-rao',    studentId: 'stu-meera', invoiceId: 'inv-9',  amount: 4500, method: 'cash',   reference: 'RCPT-241',  paidAt: iso(-5),  recordedBy: 'clerk-1', status: 'matched' },
   { id: 'pay-4', familyId: 'fam-khan',   studentId: 'stu-zoya',  invoiceId: 'inv-4',  amount: 3000, method: 'cheque', reference: 'CHQ-55120', paidAt: iso(-20), recordedBy: 'clerk-1', status: 'matched' },
   { id: 'pay-5', familyId: 'fam-verma',                                                amount: 12000, method: 'cheque', reference: 'CHQ-55133', paidAt: iso(-2),  recordedBy: 'clerk-1', status: 'review', note: 'Larger than any single open invoice' },
+  { id: 'pay-6', familyId: 'fam-sharma', studentId: 'stu-aarav', amount: 9000, method: 'upi',    reference: 'UPI-7701', paidAt: iso(-95), recordedBy: 'parent',  status: 'matched' },
+  { id: 'pay-7', familyId: 'fam-sharma', studentId: 'stu-diya',  amount: 9000, method: 'cheque', reference: 'CHQ-7702', paidAt: iso(-93), recordedBy: 'parent',  status: 'matched' },
 ];
 
 const accounts = [
