@@ -23,11 +23,13 @@ export default function App() {
 
   useEffect(() => { init(); }, [init]);
 
+  // the data connection only opens once we have a user (see store/useAppStore.ts),
+  // so an unsigned-in visitor must see the role picker before any loading check
+  if (!user) return <RolePicker onPick={signInAs} />;
+
   if (!ready || !data) {
     return <div className="grid min-h-screen place-items-center text-muted">Loading FeeBridge…</div>;
   }
-
-  if (!user) return <RolePicker onPick={signInAs} />;
 
   return (
     <div className="min-h-screen">

@@ -25,11 +25,15 @@ interface AppState {
   user: AppUser | null;
   data: DataSnapshot | null;
   ready: boolean;
+  subscribed: boolean;
 
   // ---- lifecycle
   init: () => void;
   signInAs: (role: Role) => Promise<void>;
   signOut: () => void;
+  /** connect to the data source, once - called only once we have a real user,
+   *  so a Firestore listener never fires before sign-in and dies for good */
+  subscribeToData: () => void;
 
   // ---- actions
   recordPayment: (input: {
@@ -77,27 +81,38 @@ export const useAppStore = create<AppState>((set, get) => ({
   user: null,
   data: null,
   ready: false,
+  subscribed: false,
 
   init: () => {
-    const { repo } = get();
-    repo.subscribe((snapshot) => set({ data: snapshot, ready: true }));
+    // in local demo mode there is no auth to wait for, so connect right away
+    if (!isFirebaseConfigured) { get().subscribeToData(); return; }
 
-    // when Firebase is in use, keep the session across refreshes
-    if (isFirebaseConfigured) {
-      watchAuth((user) => { if (user) set({ user }); });
-    }
+    // in Firebase mode, wait for a real signed-in user before connecting.
+    // Firestore rules require auth, and a listener that fires before sign-in
+    // completes gets rejected and never retries - even after signing in.
+    watchAuth((user) => {
+      if (user) { set({ user }); get().subscribeToData(); }
+    });
+  },
+
+  subscribeToData: () => {
+    const { repo, subscribed } = get();
+    if (subscribed) return;
+    set({ subscribed: true });
+    repo.subscribe((snapshot) => set({ data: snapshot, ready: true }));
   },
 
   signInAs: async (role) => {
     if (isFirebaseConfigured && import.meta.env.VITE_DATA_SOURCE === 'firebase') {
       try {
         const user = await signInAsRole(role);
-        if (user) { set({ user }); return; }
+        if (user) { set({ user }); get().subscribeToData(); return; }
       } catch (err) {
         console.warn('[auth] Firebase sign-in failed, using demo profile:', err);
       }
     }
     set({ user: seed.users.find((u) => u.role === role) ?? null });
+    get().subscribeToData();
   },
 
   signOut: () => {
