@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { doc, getDoc } from 'firebase/firestore';
 import type { DataSnapshot, Repository } from '../data/repository';
 import { createRepository } from '../data';
 import { signInAsRole, signOutUser, watchAuth } from '../lib/auth';
@@ -101,8 +102,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ subscribed: true });
     // TEMPORARY - remove once the Firestore permission issue is confirmed fixed
     if (isFirebaseConfigured) {
-      const { auth } = getFirebase();
+      const { auth, db } = getFirebase();
       console.log('[debug] connecting to Firestore. signed-in as:', auth?.currentUser?.uid, auth?.currentUser?.email);
+      if (db) {
+        getDoc(doc(db, 'students', 'stu-aarav'))
+          .then((snap) => console.log('[debug] single-doc getDoc OK. exists:', snap.exists(), snap.data()))
+          .catch((err) => console.error('[debug] single-doc getDoc FAILED:', err));
+      }
     }
     repo.subscribe((snapshot) => set({ data: snapshot, ready: true }));
   },
