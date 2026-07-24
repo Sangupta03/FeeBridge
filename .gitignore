@@ -11,3 +11,5 @@ coverage
 # real technical artifact worth keeping public
 docs/*
 !docs/ARCHITECTURE.md
+
+.vercel
