@@ -33,6 +33,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // fee structure isn't tied to one family - any signed-in role can see what's
+    // owed, only the office defines it
+    match /feeHeads/{feeId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
     match /invoices/{invoiceId} {
       allow read: if isAdmin() || isClerk()
                   || (signedIn() && resource.data.familyId == myFamily());
