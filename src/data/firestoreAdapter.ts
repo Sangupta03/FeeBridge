@@ -110,6 +110,14 @@ export class FirestoreRepository implements Repository {
     return { ...plan, id: docRef?.id ?? `local-${Date.now()}` } as InstallmentPlan;
   }
 
+  async updatePlan(plan: InstallmentPlan): Promise<void> {
+    const { id, ...rest } = plan;
+    await Promise.race([
+      updateDoc(doc(this.db, 'plans', id), rest),
+      new Promise<void>((res) => setTimeout(res, 400)),
+    ]);
+  }
+
   async addFeeHead(fee: Omit<FeeHead, 'id'>): Promise<FeeHead> {
     const docRef = await Promise.race([
       addDoc(collection(this.db, 'feeHeads'), fee),

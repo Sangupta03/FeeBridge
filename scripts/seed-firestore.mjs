@@ -12,10 +12,14 @@
  */
 import { readFileSync } from 'node:fs';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, writeBatch, collection } from 'firebase/firestore';
+import {
+  getFirestore, doc, setDoc, writeBatch, collection, getDocs,
+} from 'firebase/firestore';
 import {
   getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
 } from 'firebase/auth';
+
+const RESET = process.argv.includes('--reset');
 
 // ---------------------------------------------------------------- env loading
 function loadEnv() {
@@ -156,11 +160,33 @@ async function ensureAccount({ role, email, password, name, familyId }) {
   await setDoc(doc(db, 'users', uid), profile, { merge: true });
 }
 
+/** Delete every document in a collection, in batches. Used by --reset to clear
+ *  out test payments and plans, which the normal seed never touches (it only
+ *  overwrites documents that share an id with the seed data below). */
+async function clearCollection(name) {
+  const snap = await getDocs(collection(db, name));
+  if (snap.empty) return;
+  const batch = writeBatch(db);
+  snap.docs.forEach((d) => batch.delete(d.ref));
+  await batch.commit();
+  console.log(`  ${name.padEnd(10)} cleared (${snap.docs.length} documents)`);
+}
+
 async function main() {
   console.log(`\nSeeding project: ${config.projectId}\n`);
 
   console.log('Accounts');
   for (const acc of accounts) await ensureAccount(acc);
+
+  if (RESET) {
+    console.log('\nResetting (--reset)');
+    // deleting needs admin rights - the accounts loop above left us signed in
+    // as the last account it touched (the parent), so sign back in as admin
+    const admin = accounts.find((a) => a.role === 'admin');
+    await signInWithEmailAndPassword(auth, admin.email, admin.password);
+    await clearCollection('payments');
+    await clearCollection('plans');
+  }
 
   console.log('\nCollections');
   await upsertCollection('families', families);

@@ -112,6 +112,12 @@ export class LocalRepository implements Repository {
     return created;
   }
 
+  async updatePlan(plan: InstallmentPlan): Promise<void> {
+    this.write(() => {
+      this.state.plans = this.state.plans.map((p) => (p.id === plan.id ? plan : p));
+    });
+  }
+
   async addFeeHead(fee: Omit<FeeHead, 'id'>): Promise<FeeHead> {
     const created: FeeHead = { ...fee, id: newId('fee') };
     this.write(() => {

@@ -36,7 +36,11 @@ service cloud.firestore {
     match /invoices/{invoiceId} {
       allow read: if isAdmin() || isClerk()
                   || (signedIn() && resource.data.familyId == myFamily());
-      allow write: if isAdmin();
+      allow create, delete: if isAdmin();
+      // a matched payment updates the invoice it settles - the office, a clerk
+      // taking cash, or the family paying it can all trigger that update
+      allow update: if isAdmin() || isClerk()
+                    || (signedIn() && resource.data.familyId == myFamily());
     }
 
     match /payments/{paymentId} {
@@ -51,7 +55,10 @@ service cloud.firestore {
     match /plans/{planId} {
       allow read: if isAdmin()
                   || (signedIn() && resource.data.familyId == myFamily());
-      allow write: if isAdmin();
+      allow create, delete: if isAdmin();
+      // paying an instalment marks that part paid on the plan itself
+      allow update: if isAdmin()
+                    || (signedIn() && resource.data.familyId == myFamily());
     }
 
     // risk scores are never readable by families

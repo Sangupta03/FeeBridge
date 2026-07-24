@@ -19,6 +19,7 @@ export interface Repository {
   addPayment(payment: Omit<Payment, 'id'>): Promise<Payment>;
   updateInvoice(invoice: Invoice): Promise<void>;
   savePlan(plan: Omit<InstallmentPlan, 'id'>): Promise<InstallmentPlan>;
+  updatePlan(plan: InstallmentPlan): Promise<void>;
   addFeeHead(fee: Omit<FeeHead, 'id'>): Promise<FeeHead>;
 
   /** demo helper: pretend the network went away */

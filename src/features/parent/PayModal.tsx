@@ -18,6 +18,7 @@ const SCHOOL_NAME = import.meta.env.VITE_SCHOOL_NAME || 'Your School';
 function resultMessage(status: string): string {
   if (status === 'matched') return "Payment received and matched. Thank you!";
   if (status === 'review') return 'Payment received — the office will confirm it shortly.';
+  if (status === 'error') return "Couldn't save that — check your connection and try again.";
   return 'This looks like a payment already recorded today.';
 }
 
@@ -37,16 +38,22 @@ export function PayModal({ amount, label, studentId, onClose }: PayModalProps) {
 
   async function markPaid() {
     setSaving(true);
-    const outcome = await recordPayment({
-      familyId: user.familyId!,
-      studentId,
-      amount,
-      method: 'upi',
-      reference: `UPI-${Date.now()}`,
-      note: label,
-    });
-    setSaving(false);
-    setResult(outcome);
+    try {
+      const outcome = await recordPayment({
+        familyId: user.familyId!,
+        studentId,
+        amount,
+        method: 'upi',
+        reference: `UPI-${Date.now()}`,
+        note: label,
+      });
+      setResult(outcome);
+    } catch (err) {
+      console.error('[pay] recordPayment failed:', err);
+      setResult({ status: 'error' });
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -62,7 +69,14 @@ export function PayModal({ amount, label, studentId, onClose }: PayModalProps) {
       {result ? (
         <div className="mt-4 rounded-lg bg-paper2 p-4 text-sm text-body">
           <p>{resultMessage(result.status)}</p>
-          <button className="btn-ghost mt-3" onClick={onClose}>Close</button>
+          <div className="mt-3 flex gap-2">
+            {result.status === 'error' && (
+              <button className="btn-primary" onClick={() => { setResult(null); void markPaid(); }}>
+                Try again
+              </button>
+            )}
+            <button className="btn-ghost" onClick={onClose}>Close</button>
+          </div>
         </div>
       ) : (
         <button className="btn-primary mt-4 w-full" disabled={saving} onClick={() => { void markPaid(); }}>

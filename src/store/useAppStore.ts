@@ -109,8 +109,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { repo, data, user } = get();
     if (!data) return { status: 'review' as const, reason: 'Not ready yet.' };
 
-    const draft: Payment = {
-      id: 'draft',
+    // a placeholder payment, just to run through the matching engine - no real id yet
+    const draft: Omit<Payment, 'id'> = {
       familyId,
       studentId,
       amount,
@@ -124,17 +124,31 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     // the engine decides: matched, needs review, or a duplicate
     const open = data.invoices.filter((i) => outstandingOf(i) > 0);
-    const result = matchPayment(draft, open, data.payments);
+    const result = matchPayment({ id: 'draft', ...draft }, open, data.payments);
 
     const saved = await repo.addPayment({
       ...draft,
       status: result.status,
       invoiceId: result.invoiceId,
-    } as Omit<Payment, 'id'>);
+    });
 
     if (result.status === 'matched' && result.invoiceId) {
       const invoice = data.invoices.find((i) => i.id === result.invoiceId);
       if (invoice) await repo.updateInvoice(applyPayment(invoice, saved));
+
+      // if this payment settles part of an instalment plan, mark that part paid
+      const plan = data.plans.find((p) => p.invoiceId === result.invoiceId);
+      if (plan) {
+        const partIndex = plan.installments.findIndex(
+          (part) => !part.paid && Math.abs(part.amount - saved.amount) <= 1,
+        );
+        if (partIndex >= 0) {
+          const installments = plan.installments.map((part, i) =>
+            i === partIndex ? { ...part, paid: true } : part,
+          );
+          await repo.updatePlan({ ...plan, installments });
+        }
+      }
     }
 
     return { status: result.status, reason: result.reason };

@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint . --ext ts,tsx",
-    "seed": "node scripts/seed-firestore.mjs"
+    "seed": "node scripts/seed-firestore.mjs",
+    "seed:reset": "node scripts/seed-firestore.mjs --reset"
   },
   "dependencies": {
     "clsx": "^2.1.1",
