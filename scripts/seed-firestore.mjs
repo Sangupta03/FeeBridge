@@ -140,24 +140,22 @@ async function upsertCollection(name, rows) {
   console.log(`  ${name.padEnd(10)} ${rows.length} documents`);
 }
 
-async function ensureAccount({ role, email, password, name, familyId }) {
-  let uid;
+/** Create or sign in to a demo account. Returns its uid, but does not write its
+ *  profile doc yet - that write needs admin rights (see main()), and right
+ *  after this call we're signed in as the account itself, not as admin. */
+async function resolveAccountUid(email, password) {
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
-    uid = cred.user.uid;
     console.log(`  created  ${email}`);
+    return cred.user.uid;
   } catch (err) {
     if (err.code === 'auth/email-already-in-use') {
       const cred = await signInWithEmailAndPassword(auth, email, password);
-      uid = cred.user.uid;
       console.log(`  exists   ${email}`);
-    } else {
-      throw err;
+      return cred.user.uid;
     }
+    throw err;
   }
-  const profile = { name, role };
-  if (familyId) profile.familyId = familyId;
-  await setDoc(doc(db, 'users', uid), profile, { merge: true });
 }
 
 /** Delete every document in a collection, in batches. Used by --reset to clear
@@ -176,14 +174,24 @@ async function main() {
   console.log(`\nSeeding project: ${config.projectId}\n`);
 
   console.log('Accounts');
-  for (const acc of accounts) await ensureAccount(acc);
+  const uidByRole = {};
+  for (const acc of accounts) {
+    uidByRole[acc.role] = await resolveAccountUid(acc.email, acc.password);
+  }
+
+  // profile writes (and everything below) need admin rights, so sign back in
+  // as admin now - the loop above left us signed in as the last account
+  const admin = accounts.find((a) => a.role === 'admin');
+  await signInWithEmailAndPassword(auth, admin.email, admin.password);
+
+  for (const acc of accounts) {
+    const profile = { name: acc.name, role: acc.role };
+    if (acc.familyId) profile.familyId = acc.familyId;
+    await setDoc(doc(db, 'users', uidByRole[acc.role]), profile, { merge: true });
+  }
 
   if (RESET) {
     console.log('\nResetting (--reset)');
-    // deleting needs admin rights - the accounts loop above left us signed in
-    // as the last account it touched (the parent), so sign back in as admin
-    const admin = accounts.find((a) => a.role === 'admin');
-    await signInWithEmailAndPassword(auth, admin.email, admin.password);
     await clearCollection('payments');
     await clearCollection('plans');
   }
