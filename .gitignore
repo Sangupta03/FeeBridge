@@ -13,3 +13,6 @@ docs/*
 !docs/ARCHITECTURE.md
 
 .vercel
+node-bin
+node-bin/
+*.tsbuildinfo

@@ -135,3 +135,12 @@ export interface AppUser {
   role: Role;
   familyId?: string;    // only for parents
 }
+
+export interface NotificationItem {
+  id: string;
+  familyId: string;
+  text: string;
+  channel: 'whatsapp' | 'sms';
+  sentAt: string;
+  read: boolean;
+}

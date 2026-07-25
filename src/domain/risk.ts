@@ -54,39 +54,48 @@ export function bandFor(score: number): RiskBand {
  * Score a family. Returns a health score (0-100, higher is better), the modelled
  * probability of missing the next payment, and the reasons behind it.
  */
-export function scoreFamily(f: RiskFeatures): RiskResult {
+export function scoreFamily(f: RiskFeatures, customWeights?: Record<string, number>): RiskResult {
+  const w = customWeights || WEIGHTS;
   const contributions: Array<{ code: string; raw: number; weight: number }> = [
-    { code: 'latePayments', raw: f.latePayments, weight: WEIGHTS.latePayments * f.latePayments },
-    { code: 'overdueMonths', raw: f.overdueMonths, weight: WEIGHTS.overdueMonths * f.overdueMonths },
+    { 
+      code: 'latePayments', 
+      raw: f.latePayments, 
+      weight: (w.latePayments ?? WEIGHTS.latePayments) * f.latePayments 
+    },
+    { 
+      code: 'overdueMonths', 
+      raw: f.overdueMonths, 
+      weight: (w.overdueMonths ?? WEIGHTS.overdueMonths) * f.overdueMonths 
+    },
     {
       code: 'hadPartialPayment',
       raw: f.hadPartialPayment ? 1 : 0,
-      weight: f.hadPartialPayment ? WEIGHTS.hadPartialPayment : 0,
+      weight: f.hadPartialPayment ? (w.hadPartialPayment ?? WEIGHTS.hadPartialPayment) : 0,
     },
     {
       code: 'outstandingPer10k',
       raw: f.outstandingAmount,
-      weight: (WEIGHTS.outstandingPer10k * f.outstandingAmount) / 10000,
+      weight: ((w.outstandingPer10k ?? WEIGHTS.outstandingPer10k) * f.outstandingAmount) / 10000,
     },
     {
       code: 'installmentPlansUsed',
       raw: f.installmentPlansUsed,
-      weight: WEIGHTS.installmentPlansUsed * f.installmentPlansUsed,
+      weight: (w.installmentPlansUsed ?? WEIGHTS.installmentPlansUsed) * f.installmentPlansUsed,
     },
     {
       code: 'avgDelayDaysPer7',
       raw: f.avgDelayDays,
-      weight: (WEIGHTS.avgDelayDaysPer7 * f.avgDelayDays) / 7,
+      weight: ((w.avgDelayDaysPer7 ?? WEIGHTS.avgDelayDaysPer7) * f.avgDelayDays) / 7,
     },
     // more than one child is a cost pressure, so only count the extra ones
     {
       code: 'siblings',
       raw: f.siblings,
-      weight: WEIGHTS.siblings * Math.max(0, f.siblings - 1),
+      weight: (w.siblings ?? WEIGHTS.siblings) * Math.max(0, f.siblings - 1),
     },
   ];
 
-  const z = WEIGHTS.intercept + contributions.reduce((sum, c) => sum + c.weight, 0);
+  const z = (w.intercept ?? WEIGHTS.intercept) + contributions.reduce((sum, c) => sum + c.weight, 0);
   const probability = sigmoid(z);
   const score = Math.round((1 - probability) * 100);
 

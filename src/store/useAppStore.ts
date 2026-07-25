@@ -9,7 +9,7 @@ import { matchPayment, applyPayment, outstandingOf } from '../domain/reconcile';
 import { planInstallments } from '../domain/installments';
 import { forecastCollection } from '../domain/forecast';
 import type {
-  AppUser, FamilyRiskProfile, Invoice, Payment, RiskFeatures, Role,
+  AppUser, FamilyRiskProfile, Invoice, Payment, RiskFeatures, Role, NotificationItem,
 } from '../types';
 
 /**
@@ -44,7 +44,7 @@ interface AppState {
     reference: string;
     note?: string;
   }) => Promise<{ status: Payment['status']; reason: string }>;
-  offerPlan: (invoiceId: string) => Promise<void>;
+  offerPlan: (invoiceId: string, customParts?: number, preferredDayOfMonth?: number) => Promise<void>;
   /** manually split a Needs Review payment across one or more of that family's invoices */
   splitPayment: (paymentId: string, allocations: Array<{ invoiceId: string; amount: number }>) => Promise<void>;
   toggleOffline: () => void;
@@ -53,6 +53,18 @@ interface AppState {
   riskProfiles: () => Record<string, FamilyRiskProfile>;
   openInvoices: () => Invoice[];
   familyBalance: (familyId: string) => number;
+
+  // ---- theme & ml & notifications states
+  weights: Record<string, number> | null;
+  notifications: NotificationItem[];
+  theme: 'light' | 'dark';
+
+  // ---- theme & ml & notifications actions
+  saveWeights: (w: Record<string, number>) => void;
+  resetWeights: () => void;
+  sendNotification: (familyId: string, text: string, channel: 'whatsapp' | 'sms') => Promise<void>;
+  markNotificationsAsRead: (familyId: string) => void;
+  setTheme: (t: 'light' | 'dark') => void;
 }
 
 /**
@@ -183,7 +195,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     return { status: result.status, reason: result.reason };
   },
 
-  offerPlan: async (invoiceId) => {
+  offerPlan: async (invoiceId, customParts, preferredDayOfMonth) => {
     const { repo, data } = get();
     if (!data) return;
     const invoice = data.invoices.find((i) => i.id === invoiceId);
@@ -195,7 +207,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       dueDate: invoice.dueDate,
       avgDelayDays: history?.avgDelayDays ?? 0,
       installmentPlansUsed: history?.installmentPlansUsed ?? 0,
-      preferredDayOfMonth: 10,
+      parts: customParts,
+      preferredDayOfMonth: preferredDayOfMonth ?? 10,
     });
 
     await repo.savePlan({
@@ -250,7 +263,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   riskProfiles: () => {
-    const { data } = get();
+    const { data, weights } = get();
     if (!data) return {};
     const out: Record<string, FamilyRiskProfile> = {};
     for (const fam of data.families) {
@@ -258,7 +271,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       out[fam.id] = {
         familyId: fam.id,
         features,
-        result: scoreFamily(features),
+        result: scoreFamily(features, weights || undefined),
         updatedAt: new Date().toISOString(),
       };
     }
@@ -276,6 +289,35 @@ export const useAppStore = create<AppState>((set, get) => ({
     return data.invoices
       .filter((i) => i.familyId === familyId)
       .reduce((s, i) => s + outstandingOf(i), 0);
+  },
+
+  // ---- theme & ml & notifications implementation
+  weights: null,
+  notifications: [
+    { id: 'notif-1', familyId: 'fam-khan', text: 'Gentle reminder: Term 2 Tuition fees of \u20b99,000 are overdue.', channel: 'whatsapp', sentAt: new Date(Date.now() - 3 * 24 * 3600000).toISOString(), read: true },
+    { id: 'notif-2', familyId: 'fam-sharma', text: 'Standard bill issued for Aarav Sharma & Diya Sharma (Tuition + Transport).', channel: 'sms', sentAt: new Date(Date.now() - 10 * 24 * 3600000).toISOString(), read: true }
+  ],
+  theme: (localStorage.getItem('theme') as 'light' | 'dark') || 'light',
+
+  saveWeights: (w) => set({ weights: w }),
+  resetWeights: () => set({ weights: null }),
+  sendNotification: async (familyId, text, channel) => {
+    const notif: NotificationItem = {
+      id: `notif-${Date.now()}`,
+      familyId,
+      text,
+      channel,
+      sentAt: new Date().toISOString(),
+      read: false
+    };
+    set((state) => ({ notifications: [notif, ...state.notifications] }));
+  },
+  markNotificationsAsRead: (familyId) => set((state) => ({
+    notifications: state.notifications.map(n => n.familyId === familyId ? { ...n, read: true } : n)
+  })),
+  setTheme: (theme) => {
+    localStorage.setItem('theme', theme);
+    set({ theme });
   },
 }));
 

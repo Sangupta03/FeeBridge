@@ -8,6 +8,8 @@ import { PlanTimeline } from './PlanTimeline';
 import { PaymentHistory } from './PaymentHistory';
 import { NeedMoreTimeCard } from './NeedMoreTimeCard';
 
+import { ParentInbox } from './ParentInbox';
+
 interface PayRequest {
   amount: number;
   label: string;
@@ -31,6 +33,8 @@ export default function ParentWallet() {
     .filter((p) => p.familyId === familyId)
     .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))[0];
 
+  const openInvoice = data.invoices.find((i) => i.familyId === familyId && outstandingOf(i) > 0);
+
   const [pay, setPay] = useState<PayRequest | null>(null);
 
   function payNextPart() {
@@ -46,10 +50,17 @@ export default function ParentWallet() {
   }
 
   return (
-    <div className="mx-auto max-w-md lg:max-w-4xl">
-      {/* narrow and stacked on a phone, since that's where parents actually are;
-          a wide screen (like a judge's laptop) gets two columns instead of one
-          long, mostly-empty column */}
+    <div className="mx-auto max-w-md lg:max-w-4xl space-y-6 animate-in fade-in duration-300">
+      
+      {/* Portal Header with Notification Bell */}
+      <div className="flex justify-between items-center bg-white/40 dark:bg-[#151a17]/40 border border-line rounded-xl p-4 backdrop-blur-sm">
+        <div>
+          <h2 className="text-xl font-bold text-ink">Parent Wallet Portal</h2>
+          <p className="text-xs text-muted">Green Valley School · Family Portal</p>
+        </div>
+        <ParentInbox familyId={familyId} />
+      </div>
+
       <div className="lg:grid lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-6">
         <div className="space-y-6">
           <div className="card p-6 text-center">
@@ -74,7 +85,13 @@ export default function ParentWallet() {
             )}
           </div>
 
-          {plan ? <PlanTimeline plan={plan} onPayPart={payNextPart} /> : balance > 0 && <NeedMoreTimeCard />}
+          {plan ? (
+            <PlanTimeline plan={plan} onPayPart={payNextPart} />
+          ) : (
+            balance > 0 && openInvoice && (
+              <NeedMoreTimeCard balance={balance} invoiceId={openInvoice.id} />
+            )
+          )}
         </div>
 
         <div className="mt-6 space-y-6 lg:mt-0">
