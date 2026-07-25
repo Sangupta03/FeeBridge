@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Cpu, Play, RotateCcw, Sliders, Database, LineChart, Info } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { WEIGHTS } from '../../domain/risk';
-import { TRAINING_DATA, trainStep, calculateLoss, calculateAccuracy, vectorToWeights } from '../../domain/ml';
+import { TRAINING_DATA, SMOTE_TRAINING_DATA, trainStep, calculateLoss, calculateAccuracy, vectorToWeights } from '../../domain/ml';
 import { ResponsiveContainer, LineChart as RechartsLineChart, CartesianGrid, XAxis, YAxis, Tooltip, Line } from 'recharts';
 
 interface HistoryPoint {
@@ -51,8 +51,8 @@ export function MLDashboard() {
       currentWeights.avgDelayDaysPer7,
       currentWeights.siblings
     ];
-    setCost(calculateLoss(wVec, currentWeights.intercept, TRAINING_DATA));
-    setAccuracy(calculateAccuracy(wVec, currentWeights.intercept, TRAINING_DATA));
+    setCost(calculateLoss(wVec, currentWeights.intercept, SMOTE_TRAINING_DATA));
+    setAccuracy(calculateAccuracy(wVec, currentWeights.intercept, SMOTE_TRAINING_DATA));
   }, [currentWeights]);
 
   // Sync sliders to store
@@ -93,7 +93,7 @@ export function MLDashboard() {
     const interval = setInterval(() => {
       for (let i = 0; i < stepSize; i++) {
         currentEpoch++;
-        const step = trainStep(wVec, intercept, TRAINING_DATA, learningRate);
+        const step = trainStep(wVec, intercept, SMOTE_TRAINING_DATA, learningRate);
         wVec = step.weights;
         intercept = step.intercept;
         
@@ -113,8 +113,8 @@ export function MLDashboard() {
       const finalWeights = vectorToWeights(wVec, intercept);
       setLocalWeights(finalWeights);
       saveWeights(finalWeights);
-      setCost(calculateLoss(wVec, intercept, TRAINING_DATA));
-      setAccuracy(calculateAccuracy(wVec, intercept, TRAINING_DATA));
+      setCost(calculateLoss(wVec, intercept, SMOTE_TRAINING_DATA));
+      setAccuracy(calculateAccuracy(wVec, intercept, SMOTE_TRAINING_DATA));
       setHistory([...epochHistory]);
 
       if (currentEpoch >= maxEpochs) {
@@ -248,7 +248,7 @@ export function MLDashboard() {
           <div className="card p-5 space-y-3">
             <h3 className="text-base font-bold flex items-center gap-1.5">
               <Database size={16} />
-              Historical Training Set ({TRAINING_DATA.length} families)
+              Historical Seed Set ({TRAINING_DATA.length} families) &bull; SMOTE Oversampled to 5000 records
             </h3>
             <div className="overflow-x-auto max-h-64 border border-line/45 rounded-lg">
               <table className="w-full text-[11px] text-left border-collapse">

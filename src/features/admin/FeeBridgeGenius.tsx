@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Sparkles, Send, X, Copy, Check, Users, MessageSquareText, TrendingUp } from 'lucide-react';
+import { Sparkles, Send, X, Copy, Check, Info, HelpCircle } from 'lucide-react';
 import { useAppStore, useForecast } from '../../store/useAppStore';
 import { inr, inrShort } from '../../lib/format';
 import { outstandingOf } from '../../domain/reconcile';
@@ -15,22 +15,40 @@ interface Message {
 
 interface FeeBridgeGeniusProps {
   onClose: () => void;
-  onOfferPlan: (invoiceId: string) => void;
+  onOfferPlan?: (invoiceId: string) => void;
 }
 
 export function FeeBridgeGenius({ onClose, onOfferPlan }: FeeBridgeGeniusProps) {
   const data = useAppStore((s) => s.data)!;
+  const user = useAppStore((s) => s.user)!;
   const profiles = useAppStore((s) => s.riskProfiles());
   const forecast = useForecast();
-  
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      sender: 'assistant',
-      text: "Hello! I'm **FeeBridge Genius**, your office AI copilot. I analyze family payment histories, risk factors, and collection forecasts to help you manage fees with empathy and clarity. \n\nWhat can I assist you with today?",
-      timestamp: new Date(),
+
+  const isParent = user.role === 'parent';
+  const familyId = user.familyId || '';
+  const balance = useAppStore((s) => s.familyBalance(familyId));
+
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (isParent) {
+      const kids = data.students.filter((s) => s.familyId === familyId).map((s) => s.name).join(' & ');
+      return [
+        {
+          sender: 'assistant',
+          text: `Hello! I'm your **FeeBridge Family Assistant**. I'm here to help you manage your household school fees for **${kids}**.\n\nYour family's outstanding balance is **${inr(balance)}**. I can help you understand your invoices, review payment options, or explain installment options. What can I do for you today?`,
+          timestamp: new Date(),
+        }
+      ];
+    } else {
+      return [
+        {
+          sender: 'assistant',
+          text: "Hello! I'm **FeeBridge Genius**, your office AI copilot. I analyze family payment histories, risk factors, and collection forecasts to help you manage fees with empathy and clarity. \n\nWhat can I assist you with today?",
+          timestamp: new Date(),
+        }
+      ];
     }
-  ]);
-  
+  });
+
   const [input, setInput] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -45,7 +63,6 @@ export function FeeBridgeGenius({ onClose, onOfferPlan }: FeeBridgeGeniusProps) 
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  // Heuristic query handler
   const handleQuery = (queryText: string) => {
     if (!queryText.trim()) return;
 
@@ -58,100 +75,104 @@ export function FeeBridgeGenius({ onClose, onOfferPlan }: FeeBridgeGeniusProps) 
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
 
-    // Simulate AI thinking
+    // Simulate thinking delay
     setTimeout(() => {
       const normalizedQuery = queryText.toLowerCase().trim();
       let responseText = "";
       let responseType: Message['type'] = 'general';
       let responseData: any = null;
 
-      if (normalizedQuery.includes('risk') || normalizedQuery.includes('nudge') || normalizedQuery.includes('help') || normalizedQuery.includes('worth')) {
-        // Risk Profile Summary
-        const atRisk = Object.values(profiles)
-          .filter((p) => p.result.band !== 'healthy')
-          .sort((a, b) => a.result.score - b.result.score);
-
-        if (atRisk.length === 0) {
-          responseText = "I've scanned all families, and **every household is currently on track**! There are no active payment risks flagged at this moment.";
+      if (isParent) {
+        // Parent role chatbot logic
+        if (normalizedQuery.includes('balance') || normalizedQuery.includes('invoice') || normalizedQuery.includes('bill') || normalizedQuery.includes('due')) {
+          const invoices = data.invoices.filter((i) => i.familyId === familyId && outstandingOf(i) > 0);
+          
+          if (invoices.length === 0) {
+            responseText = `You have **no outstanding fees**! Your family balance is clean. Thank you!`;
+          } else {
+            responseText = `Your family outstanding balance is **${inr(balance)}**:\n\n` + 
+              invoices.map(i => `* **${i.title}**: ${inr(outstandingOf(i))} (Due: ${new Date(i.dueDate).toLocaleDateString()})`).join('\n') +
+              `\n\nYou can pay this directly using the payment buttons or apply for an installment plan on your dashboard.`;
+          }
+        } else if (normalizedQuery.includes('split') || normalizedQuery.includes('installment') || normalizedQuery.includes('more time') || normalizedQuery.includes('parts') || normalizedQuery.includes('monthly')) {
+          responseText = `We understand that large lump-sum payments can be challenging. \n\nYou can divide your outstanding fees into **2, 3, or 4 monthly parts** directly on your Parent Wallet using the **"Need more time?"** card. \n\n*For example, your balance of ${inr(balance)} could be split into:* \n* **2 monthly parts** of ${inr(balance / 2)} \n* **3 monthly parts** of ${inr(balance / 3)} \n* **4 monthly parts** of ${inr(balance / 4)} \n\nYou can choose your preferred day of the month for installments. Simply click "Plan details" on your dashboard to save it.`;
+        } else if (normalizedQuery.includes('upi') || normalizedQuery.includes('pay') || normalizedQuery.includes('gpay') || normalizedQuery.includes('phonepe') || normalizedQuery.includes('paytm')) {
+          responseText = `Paying is quick and secure:\n1. Click the **"Pay Now"** button next to your open invoice or next installment.\n2. Choose your preferred UPI app (Google Pay, PhonePe, Paytm, BHIM).\n3. Scan the generated QR code or enter your payment PIN to complete the transaction.\n\nTransactions reconcile instantly on our records!`;
         } else {
-          responseText = `I've analyzed the payment profiles. There are **${atRisk.length} families** currently flagged for a gentle nudge or assistance:`;
-          responseType = 'risk';
-          responseData = atRisk.map(p => {
-            const fam = data.families.find(f => f.id === p.familyId)!;
-            const invoice = data.invoices
-              .filter(i => i.familyId === p.familyId && outstandingOf(i) > 0)
-              .sort((a, b) => +new Date(a.dueDate) - +new Date(b.dueDate))[0];
-            return {
-              familyId: p.familyId,
-              familyName: fam.name,
-              guardianName: fam.guardianName,
-              score: p.result.score,
-              band: p.result.band,
-              reasons: p.result.reasons,
-              outstanding: invoice ? outstandingOf(invoice) : 0,
-              invoiceId: invoice?.id
-            };
-          });
+          responseText = `I can help you review your balance, understand installment options, or guide you through payments. Try asking me:\n\n* **"What is my balance?"** to see detailed invoices.\n* **"How do I split payments?"** to see installment calculations.\n* **"How do I pay?"** to review UPI instructions.`;
         }
-      } else if (normalizedQuery.includes('reminder') || normalizedQuery.includes('whatsapp') || normalizedQuery.includes('message') || normalizedQuery.includes('sharma') || normalizedQuery.includes('patel') || normalizedQuery.includes('rao') || normalizedQuery.includes('gupta')) {
-        // Draft WhatsApp/SMS reminder
-        // Check if query specifies a family
-        let targetFamily = data.families.find(f => normalizedQuery.includes(f.name.toLowerCase()) || normalizedQuery.includes(f.guardianName.toLowerCase()));
-        
-        if (!targetFamily) {
-          // If no specific family, offer a list of families with outstanding balances
-          const outstandingFamilies = data.families.filter(f => {
-            const balance = data.invoices.filter(i => i.familyId === f.id).reduce((sum, i) => sum + outstandingOf(i), 0);
-            return balance > 0;
-          });
-          
-          responseText = "Which family would you like to draft a reminder for? Here are the families with outstanding balances:";
-          responseType = 'reminder';
-          responseData = outstandingFamilies.map(f => {
-            const balance = data.invoices.filter(i => i.familyId === f.id).reduce((sum, i) => sum + outstandingOf(i), 0);
-            return {
-              id: f.id,
-              name: f.name,
-              guardianName: f.guardianName,
-              balance
-            };
-          });
-        } else {
-          // Draft reminder for target family
-          const balance = data.invoices.filter(i => i.familyId === targetFamily!.id).reduce((sum, i) => sum + outstandingOf(i), 0);
-          const kids = data.students.filter(s => s.familyId === targetFamily!.id).map(s => s.name).join(' and ');
-          
-          const reminderText = `Hi ${targetFamily.guardianName},\n\nWe hope you're doing well. This is a gentle note regarding the Term 2 fees for ${kids} (${inr(balance)}). We want to make sure fee payments are stress-free for your household. If splitting this into a flexible monthly installment plan would help, we can set that up in one click.\n\nNo pressure at all — let us know how you'd like to proceed! \n- Green Valley School Office`;
-          
-          responseText = `Here is an empathetic draft reminder for the **${targetFamily.name}** family. It frames the conversation around support and offers a flexible payment plan rather than just demanding payment:`;
-          responseType = 'general';
-          responseData = {
-            draft: reminderText,
-            familyName: targetFamily.name,
-            id: targetFamily.id
-          };
-        }
-      } else if (normalizedQuery.includes('forecast') || normalizedQuery.includes('collection') || normalizedQuery.includes('expected') || normalizedQuery.includes('rupee')) {
-        // Forecast explanation
-        const totalDue = data.invoices.reduce((sum, i) => sum + i.amountDue, 0);
-        const totalPaid = data.invoices.reduce((sum, i) => sum + i.amountPaid, 0);
-        const rate = totalDue > 0 ? Math.round((totalPaid / totalDue) * 100) : 0;
-        
-        responseText = `### Fee Collection Analytics
-* **Total Billed:** ${inr(totalDue)}
-* **Collected to Date:** ${inr(totalPaid)} (${rate}% collection rate)
-* **Outstanding Amount:** ${inr(forecast.totalOutstanding)}
-
-### Collection Prediction (Explainable Logistic Model)
-Our model estimates we will collect **${inr(forecast.expected)}** of the outstanding amount, with an honest confidence range of **${inr(forecast.low)} to ${inr(forecast.high)}** (confidence level: ${Math.round(forecast.confidence * 100)}%). 
-
-**Key Insights:**
-1. The confidence index is shaped by historical delay averages and installment behaviors.
-2. Offering installment plans to the **${Object.values(profiles).filter(p => p.result.band === 'at_risk').length} at-risk families** will likely shift the expected collection towards the high estimate of ${inrShort(forecast.high)}.`;
-        responseType = 'forecast';
       } else {
-        // Generic help response
-        responseText = "I can help you analyze risk profiles, draft empathetic reminders, or interpret collections forecast. Here are some things you can ask me:\n\n* **\"Show risk profiles\"** to find families who might need assistance.\n* **\"Draft WhatsApp reminder\"** to create a kind reminder message.\n* **\"Explain collection forecast\"** to see predictive trends.";
+        // Admin role chatbot logic
+        if (normalizedQuery.includes('risk') || normalizedQuery.includes('nudge') || normalizedQuery.includes('help') || normalizedQuery.includes('worth')) {
+          const atRisk = Object.values(profiles)
+            .filter((p) => p.result.band !== 'healthy')
+            .sort((a, b) => a.result.score - b.result.score);
+
+          if (atRisk.length === 0) {
+            responseText = "I've scanned all families, and **every household is currently on track**! There are no active payment risks flagged at this moment.";
+          } else {
+            responseText = `I've analyzed the payment profiles. There are **${atRisk.length} families** currently flagged for a gentle nudge or assistance:`;
+            responseType = 'risk';
+            responseData = atRisk.map(p => {
+              const fam = data.families.find(f => f.id === p.familyId)!;
+              const invoice = data.invoices
+                .filter(i => i.familyId === p.familyId && outstandingOf(i) > 0)
+                .sort((a, b) => +new Date(a.dueDate) - +new Date(b.dueDate))[0];
+              return {
+                familyId: p.familyId,
+                familyName: fam.name,
+                guardianName: fam.guardianName,
+                score: p.result.score,
+                band: p.result.band,
+                reasons: p.result.reasons,
+                outstanding: invoice ? outstandingOf(invoice) : 0,
+                invoiceId: invoice?.id
+              };
+            });
+          }
+        } else if (normalizedQuery.includes('reminder') || normalizedQuery.includes('whatsapp') || normalizedQuery.includes('message') || normalizedQuery.includes('sharma') || normalizedQuery.includes('patel') || normalizedQuery.includes('rao') || normalizedQuery.includes('verma')) {
+          let targetFamily = data.families.find(f => normalizedQuery.includes(f.name.toLowerCase()) || normalizedQuery.includes(f.guardianName.toLowerCase()));
+          
+          if (!targetFamily) {
+            const outstandingFamilies = data.families.filter(f => {
+              const bal = data.invoices.filter(i => i.familyId === f.id).reduce((sum, i) => sum + outstandingOf(i), 0);
+              return bal > 0;
+            });
+            
+            responseText = "Which family would you like to draft a reminder for? Here are the families with outstanding balances:";
+            responseType = 'reminder';
+            responseData = outstandingFamilies.map(f => {
+              const bal = data.invoices.filter(i => i.familyId === f.id).reduce((sum, i) => sum + outstandingOf(i), 0);
+              return {
+                id: f.id,
+                name: f.name,
+                guardianName: f.guardianName,
+                balance: bal
+              };
+            });
+          } else {
+            const bal = data.invoices.filter(i => i.familyId === targetFamily!.id).reduce((sum, i) => sum + outstandingOf(i), 0);
+            const kids = data.students.filter(s => s.familyId === targetFamily!.id).map(s => s.name).join(' and ');
+            
+            const reminderText = `Hi ${targetFamily.guardianName},\n\nWe hope you're doing well. This is a gentle note regarding the Term 2 fees for ${kids} (${inr(bal)}). We want to make sure fee payments are stress-free for your household. If splitting this into a flexible monthly installment plan would help, we can set that up in one click.\n\nNo pressure at all — let us know how you'd like to proceed! \n- Green Valley School Office`;
+            
+            responseText = `Here is an empathetic draft reminder for the **${targetFamily.name}** family. It frames the conversation around support and offers a flexible payment plan rather than just demanding payment:`;
+            responseData = {
+              draft: reminderText,
+              familyName: targetFamily.name,
+              id: targetFamily.id
+            };
+          }
+        } else if (normalizedQuery.includes('forecast') || normalizedQuery.includes('collection') || normalizedQuery.includes('expected') || normalizedQuery.includes('rupee')) {
+          const totalDue = data.invoices.reduce((sum, i) => sum + i.amountDue, 0);
+          const totalPaid = data.invoices.reduce((sum, i) => sum + i.amountPaid, 0);
+          const rate = totalDue > 0 ? Math.round((totalPaid / totalDue) * 100) : 0;
+          
+          responseText = `### Fee Collection Analytics\n* **Total Billed:** ${inr(totalDue)}\n* **Collected to Date:** ${inr(totalPaid)} (${rate}% collection rate)\n* **Outstanding Amount:** ${inr(forecast.totalOutstanding)}\n\n### Collection Prediction (Explainable Logistic Model)\nOur model estimates we will collect **${inr(forecast.expected)}** of the outstanding amount, with an honest confidence range of **${inr(forecast.low)} to ${inr(forecast.high)}** (confidence level: ${Math.round(forecast.confidence * 100)}%). \n\n**Key Insights:**\n1. The confidence index is shaped by historical delay averages and installment behaviors.\n2. Offering installment plans to the **${Object.values(profiles).filter(p => p.result.band === 'at_risk').length} at-risk families** will likely shift the expected collection towards the high estimate of ${inrShort(forecast.high)}.`;
+          responseType = 'forecast';
+        } else {
+          responseText = "I can help you analyze risk profiles, draft empathetic reminders, or interpret collections forecast. Here are some things you can ask me:\n\n* **\"Show risk profiles\"** to find families who might need assistance.\n* **\"Draft WhatsApp reminder\"** to create a kind reminder message.\n* **\"Explain collection forecast\"** to see predictive trends.";
+        }
       }
 
       setMessages((prev) => [
@@ -185,11 +206,15 @@ Our model estimates we will collect **${inr(forecast.expected)}** of the outstan
               <Sparkles size={16} fill="currentColor" className="animate-pulse" />
             </span>
             <div>
-              <h2 className="font-serif text-lg font-bold text-cream">FeeBridge Genius</h2>
-              <p className="text-[10px] text-cream/70 tracking-wide uppercase font-bold font-sans">Office AI Copilot</p>
+              <h2 className="font-serif text-lg font-bold text-cream">
+                {isParent ? 'Family Assistant' : 'FeeBridge Genius'}
+              </h2>
+              <p className="text-[10px] text-cream/70 tracking-wide uppercase font-bold font-sans">
+                {isParent ? 'Parent Portal Copilot' : 'Office AI Copilot'}
+              </p>
             </div>
           </div>
-          <button onClick={onClose} className="rounded-full p-1 hover:bg-brand-mid transition-colors">
+          <button onClick={onClose} className="rounded-full p-1 hover:bg-brand-mid transition-colors cursor-pointer">
             <X size={18} />
           </button>
         </div>
@@ -213,19 +238,19 @@ Our model estimates we will collect **${inr(forecast.expected)}** of the outstan
                   <div 
                     className={`rounded-lg p-3.5 text-sm leading-relaxed shadow-sm ${
                       isAss 
-                        ? 'bg-white border border-line text-ink' 
+                        ? 'bg-white border border-line text-ink dark:bg-[#1a201d]' 
                         : 'bg-brand text-cream'
                     }`}
                   >
-                    <p className="whitespace-pre-line">
+                    <p className="whitespace-pre-line text-ink">
                       {msg.text}
                     </p>
                     
-                    {/* Render helper views if type matched */}
+                    {/* Render helpers for admin */}
                     {msg.type === 'risk' && msg.data && (
                       <div className="mt-3 space-y-2 border-t border-line pt-3">
                         {msg.data.map((f: any) => (
-                          <div key={f.familyId} className="rounded border border-line bg-paper p-2.5 text-xs text-ink">
+                          <div key={f.familyId} className="rounded border border-line bg-paper dark:bg-[#151a17] p-2.5 text-xs text-ink">
                             <div className="flex justify-between font-semibold">
                               <span>{f.familyName} ({f.guardianName})</span>
                               <span className={f.band === 'at_risk' ? 'text-terra-dark font-bold' : 'text-amber font-bold'}>
@@ -241,7 +266,7 @@ Our model estimates we will collect **${inr(forecast.expected)}** of the outstan
                               ))}
                             </ul>
                             <div className="mt-2.5 flex gap-2">
-                              {f.invoiceId && (
+                              {f.invoiceId && onOfferPlan && (
                                 <button 
                                   className="btn-primary py-1 px-2.5 text-[10px]"
                                   onClick={() => {
@@ -269,51 +294,42 @@ Our model estimates we will collect **${inr(forecast.expected)}** of the outstan
                         {msg.data.map((f: any) => (
                           <button
                             key={f.id}
-                            className="w-full text-left rounded border border-line bg-paper hover:bg-white hover:border-brand p-2 text-xs flex justify-between items-center transition-all"
+                            className="w-full text-left rounded border border-line bg-paper hover:bg-white hover:border-brand/40 p-2 text-xs flex justify-between items-center cursor-pointer text-ink dark:bg-[#151a17]"
                             onClick={() => handleQuery(`Draft WhatsApp reminder for ${f.name}`)}
                           >
-                            <div>
-                              <div className="font-semibold text-ink">{f.name}</div>
-                              <div className="text-[10px] text-muted">Guardian: {f.guardianName}</div>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-bold text-terra-dark">{inr(f.balance)}</div>
-                              <div className="text-[9px] text-brand font-semibold">Click to draft</div>
-                            </div>
+                            <span>{f.name} ({f.guardianName})</span>
+                            <span className="font-semibold text-brand">{inr(f.balance)}</span>
                           </button>
                         ))}
                       </div>
                     )}
 
-                    {/* Copied visual for draft */}
-                    {msg.data?.draft && (
-                      <div className="mt-3 border-t border-line pt-3">
-                        <div className="rounded bg-paper p-3 text-xs font-mono text-ink select-all whitespace-pre-line border border-line max-h-32 overflow-y-auto">
+                    {/* Copy button for reminder drafts */}
+                    {msg.sender === 'assistant' && msg.data && msg.data.draft && (
+                      <div className="mt-3 border-t border-line pt-3 space-y-2">
+                        <div className="rounded bg-paper dark:bg-[#151a17] border border-line p-2 text-xs font-mono select-all whitespace-pre-wrap text-ink">
                           {msg.data.draft}
                         </div>
-                        <div className="mt-2 flex justify-between items-center">
-                          <span className="text-[10px] text-muted">Empathetic copy ready</span>
-                          <button
-                            onClick={() => copyToClipboard(msg.data.draft, msg.data.id)}
-                            className="btn-ghost py-1 px-2.5 text-[10px] flex items-center gap-1.5"
-                          >
-                            {copiedId === msg.data.id ? (
-                              <>
-                                <Check size={11} className="text-brand" />
-                                Copied!
-                              </>
-                            ) : (
-                              <>
-                                <Copy size={11} />
-                                Copy text
-                              </>
-                            )}
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => copyToClipboard(msg.data.draft, msg.timestamp.toISOString())}
+                          className="btn-ghost py-1 px-2.5 text-[10px] flex items-center gap-1.5"
+                        >
+                          {copiedId === msg.timestamp.toISOString() ? (
+                            <>
+                              <Check size={11} className="text-brand" />
+                              Copied!
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={11} />
+                              Copy Draft text
+                            </>
+                          )}
+                        </button>
                       </div>
                     )}
                   </div>
-                  <div className={`text-[10px] text-muted ${!isAss && 'text-right'}`}>
+                  <div className={`text-[9px] text-muted ${!isAss ? 'text-right' : ''}`}>
                     {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
@@ -324,53 +340,21 @@ Our model estimates we will collect **${inr(forecast.expected)}** of the outstan
         </div>
 
         {/* Input box */}
-        <div className="p-3 border-t border-line bg-white">
-          <form 
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleQuery(input);
-            }}
-            className="flex gap-2"
+        <div className="border-t border-line p-3 bg-white dark:bg-[#121614] flex gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleQuery(input)}
+            placeholder={isParent ? 'Ask about your balance or split options...' : 'Ask about risk profiles or drafts...'}
+            className="flex-1 rounded-lg border border-line px-3 py-1.5 text-xs focus:outline-none focus:border-brand"
+          />
+          <button
+            onClick={() => handleQuery(input)}
+            className="btn-primary p-2 text-cream flex items-center justify-center rounded-lg"
           >
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about risk, reminder drafts, or forecasts..."
-              className="flex-1 rounded-lg border border-line px-3 py-2 text-sm bg-paper focus:outline-none focus:border-brand focus:bg-white transition-all"
-            />
-            <button 
-              type="submit" 
-              className="grid place-items-center h-9 w-9 rounded-lg bg-brand text-cream hover:bg-brand-mid transition-colors"
-            >
-              <Send size={15} />
-            </button>
-          </form>
-          
-          {/* Quick prompts */}
-          <div className="mt-2.5 flex flex-wrap gap-1.5">
-            <button 
-              onClick={() => handleQuery('Show risk profiles')}
-              className="text-[10px] bg-mint text-brand-dark px-2.5 py-1 rounded-full border border-mint-border hover:bg-brand hover:text-cream transition-all flex items-center gap-1 cursor-pointer"
-            >
-              <Users size={9} />
-              Analyze Risk
-            </button>
-            <button 
-              onClick={() => handleQuery('Draft WhatsApp reminder')}
-              className="text-[10px] bg-peach text-terra-dark px-2.5 py-1 rounded-full border border-peach-border hover:bg-brand hover:text-cream transition-all flex items-center gap-1 cursor-pointer"
-            >
-              <MessageSquareText size={9} />
-              Draft Reminders
-            </button>
-            <button 
-              onClick={() => handleQuery('Explain forecast')}
-              className="text-[10px] bg-paper2 text-ink/70 px-2.5 py-1 rounded-full border border-line hover:bg-brand hover:text-cream transition-all flex items-center gap-1 cursor-pointer"
-            >
-              <TrendingUp size={9} />
-              Forecast Review
-            </button>
-          </div>
+            <Send size={14} />
+          </button>
         </div>
 
       </div>

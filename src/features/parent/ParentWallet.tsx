@@ -9,6 +9,8 @@ import { PaymentHistory } from './PaymentHistory';
 import { NeedMoreTimeCard } from './NeedMoreTimeCard';
 
 import { ParentInbox } from './ParentInbox';
+import { Sparkles } from 'lucide-react';
+import { FeeBridgeGenius } from '../admin/FeeBridgeGenius';
 
 interface PayRequest {
   amount: number;
@@ -26,6 +28,8 @@ export default function ParentWallet() {
   const user = useAppStore((s) => s.user)!;
   const familyId = user.familyId!;
   const balance = useAppStore((s) => s.familyBalance(familyId));
+
+  const [geniusOpen, setGeniusOpen] = useState(false);
 
   const kids = data.students.filter((s) => s.familyId === familyId);
 
@@ -142,6 +146,19 @@ export default function ParentWallet() {
           onClose={() => setPay(null)}
         />
       )}
+
+      {geniusOpen && (
+        <FeeBridgeGenius onClose={() => setGeniusOpen(false)} />
+      )}
+
+      {/* Floating AI Sparkles Button */}
+      <button
+        onClick={() => setGeniusOpen(true)}
+        className="fixed bottom-6 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-brand text-cream shadow-2xl hover:scale-105 transition-all cursor-pointer border-2 border-cream/20"
+        title="Ask Family Assistant"
+      >
+        <Sparkles size={20} fill="currentColor" className="animate-pulse" />
+      </button>
     </div>
   );
 }
