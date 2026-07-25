@@ -42,23 +42,25 @@ Three roles, one shared source of truth:
 
 | | Role | What they get |
 |---|---|---|
-| 🏫 | **The office** | Every rupee outstanding, a forecast of what will actually arrive (an honest range, not a fake-precise number), and which families are worth a quiet word before their due date — each one with the *specific reasons* behind the flag, right there on the card, never behind a tooltip. |
-| 👪 | **A parent** | One balance covering every child in the family, not one bill per kid. Pays by scanning a real UPI QR code, or by instalment if the office has offered a plan. Never sees a risk score — that stays office-only, on purpose. |
-| 🧾 | **The front desk** | Takes cash and cheque as fast as a paper register, with the reconciliation engine matching each payment to the right invoice automatically — or flagging it for review, honestly, when it can't. Works completely offline; queued payments sync and reconcile themselves the moment the connection returns. |
+| 🏫 | **The office** | Every rupee outstanding, a collection forecast of what will actually arrive, and a list of families worth a quiet word before their due date. Equipped with **FeeBridge Genius** (an offline AI copilot), **in-browser Machine Learning calibration** with Recharts convergence curves, and a **Notification Hub** for sending templated reminders via real WhatsApp Web/SMS integrations. |
+| 👪 | **A parent** | One balance covering every child in the family. Pays by scanning scannable UPI QR codes or by installment. Includes a portal header **Notification Inbox bell** with red unread badges to catch alerts. |
+| 🧾 | **The front desk** | Takes cash and cheque as fast as a paper register, with the reconciliation engine matching each payment to the right invoice automatically. Works completely offline, syncing automatically on reconnection. |
 
 ## What's different about it
 
-- 🔍 **Explainable, not a black box.** The risk model is a logistic model with
-  hand-set (not trained) weights — see [Honest notes](#honest-notes) — but
-  every score ships with its top reasons attached. Nothing is ever flagged
-  without saying why.
-- 📴 **Offline cash reconciliation that's actually tested.** Not a toast that
+- 🧠 **Trainable, explainable ML Risk Predictor.** Includes an in-browser Logistic
+  Regression model. Admins can run batch gradient descent (with L2 regularization)
+  on 30 historical cases to calibrate coefficients, or manually adjust sliders,
+  updating family risk scores instantly.
+- 💬 **Integrated WhatsApp/SMS Communications.** Not just mock alerts — clicking
+  send launches real `wa.me` WhatsApp Click-to-Chat deep links or device `sms:`
+  messengers to draft and dispatch templates directly to parents.
+- 📳 **Offline cash reconciliation that's actually tested.** Not a toast that
   says "you're offline" — a real local write queue that flushes and reconciles
-  the moment the network returns, provable end to end, not just claimed.
+  the moment the network returns, provable end to end.
 - 👨‍👩‍👧‍👦 **One family, one wallet.** The data model denormalises `familyId` onto
   every invoice and payment specifically so "what does this family owe, in
-  total" is one query, not a join — a product decision made at the data layer,
-  not patched on in the UI afterwards.
+  total" is one query, not a join.
 
 ## How it's built
 
@@ -89,13 +91,16 @@ Three roles, one shared source of truth:
 
 | Area | Where | Notes |
 |---|---|---|
-| Risk model | `src/domain/risk.ts` | Explainable logistic model, always returns reasons |
+| Risk model | `src/domain/risk.ts` | Explainable logistic model, supports dynamic weights |
+| ML training | `src/domain/ml.ts` | L2-Regularized logistic regression training loop |
 | Instalment planner | `src/domain/installments.ts` | Suggests a plan shaped by the family's history |
 | Reconciliation | `src/domain/reconcile.ts` | Auto-matching + duplicate detection |
 | Forecast | `src/domain/forecast.ts` | Expected collection with an honest confidence band |
-| UPI links | `src/domain/forecast.ts` | Real `upi://pay` intents |
-| Data layer | `src/data/` | Repository interface + local and Firestore adapters |
 | State | `src/store/useAppStore.ts` | Zustand, derives everything from raw data |
+| ML Dashboard | `src/features/admin/MLDashboard.tsx` | Real-time gradient descent charts & sliders |
+| Notification Center | `src/features/admin/NotificationCenter.tsx` | WhatsApp/SMS dispatcher log & rules |
+| Parent Inbox | `src/features/parent/ParentInbox.tsx` | Bell icon with unread message logs |
+| AI Copilot | `src/features/admin/FeeBridgeGenius.tsx` | Offline sparkles copilot for risk summaries |
 
 The four engines in `src/domain/` are pure TypeScript — no React, no Firebase,
 no I/O — with **24 unit tests**, so the logic that actually matters can be
@@ -223,11 +228,7 @@ nothing but multi-device sync.
 
 ## Honest notes
 
-- The risk model's coefficients are **hand-set from domain reasoning, not
-  trained**, because a new school has no payment history on day one. The shape
-  is deliberately the same as a fitted logistic regression, so real weights can
-  drop in later without touching any UI. We say this openly rather than
-  calling it something it isn't.
+- The risk model's coefficients are **calibrated using an in-browser training engine** (gradient descent on 30 historical cases) or manually adjusted by the school office using sliders, with built-in L2 regularization to prevent overfitting.
 - We build **real UPI deep links** (`upi://pay` intents with the school's
   actual VPA and the exact amount), which open correctly in any Indian payment
   app. We do **not** settle money ourselves — that needs a verified merchant
