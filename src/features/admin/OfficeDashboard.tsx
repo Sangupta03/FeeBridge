@@ -46,7 +46,7 @@ export default function OfficeDashboard() {
         <TabButton id="review" active={tab === 'review'} onClick={() => setTab('review')}>
           {`Needs review${reviewCount > 0 ? ` · ${reviewCount}` : ''}`}
         </TabButton>
-        <TabButton id="ml" active={tab === 'ml'} onClick={() => setTab('ml')}>ML Risk Model</TabButton>
+        <TabButton id="ml" active={tab === 'ml'} onClick={() => setTab('ml')}>Risk Predictor</TabButton>
         <TabButton id="notifications" active={tab === 'notifications'} onClick={() => setTab('notifications')}>Notifications</TabButton>
       </div>
 
