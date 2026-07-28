@@ -22,9 +22,7 @@ None of that is really a technology problem. It's a **dignity** problem. FeeBrid
 
 Here is a look at the responsive **Parent Wallet Portal**, showcasing the unified family balance, interactive installment plans, and transaction history.
 
-<div align="center">
-  <img src="docs/screenshots/parent_portal.png" alt="Parent Wallet Portal Dashboard" width="90%" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12);" />
-</div>
+<img width="1907" height="916" alt="image" src="https://github.com/user-attachments/assets/be020fa5-3d21-4524-9052-4223d7825efd" />
 
 ---
 
