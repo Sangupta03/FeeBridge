@@ -90,7 +90,7 @@ export function NeedMoreTimeCard({ balance, invoiceId }: NeedMoreTimeCardProps) 
                       className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                         parts === p
                           ? 'bg-brand border-brand text-cream'
-                          : 'bg-white border-line text-muted hover:border-brand hover:text-ink'
+                          : 'bg-white dark:bg-[#121614] border-line text-muted hover:border-brand hover:text-ink'
                       }`}
                     >
                       {p} Parts
@@ -107,7 +107,7 @@ export function NeedMoreTimeCard({ balance, invoiceId }: NeedMoreTimeCardProps) 
                 <select
                   value={dayOfMonth}
                   onChange={(e) => setDayOfMonth(Number(e.target.value))}
-                  className="w-full text-xs font-semibold rounded-lg border border-line p-2 bg-white focus:outline-none focus:border-brand"
+                  className="w-full text-xs font-semibold rounded-lg border border-line p-2 bg-white dark:bg-[#121614] text-ink focus:outline-none focus:border-brand"
                 >
                   <option value={5}>5th of the month (e.g. after early salaries)</option>
                   <option value={10}>10th of the month (standard billing)</option>

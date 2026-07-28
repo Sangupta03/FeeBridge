@@ -25,7 +25,7 @@ export function PlanTimeline({ plan, onPayPart }: PlanTimelineProps) {
             className={
               i.paid
                 ? 'flex items-center justify-between rounded-lg bg-mint px-4 py-2 text-sm'
-                : 'flex items-center justify-between rounded-lg border border-line bg-white px-4 py-2 text-sm'
+                : 'flex items-center justify-between rounded-lg border border-line bg-white dark:bg-[#121614] px-4 py-2 text-sm'
             }
           >
             <span className="font-semibold text-ink">Part {i.seq} · {inr(i.amount)}</span>
