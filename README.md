@@ -19,15 +19,7 @@ None of that is really a technology problem. It's a **dignity** problem. FeeBrid
 ---
 
 ## 🎨 Product Interface Gallery
-
-### 1. Role Selection Portal
-Welcome screen with smooth 3D hover effects (parallax tilt interaction) allowing users to switch between the three core portals.
-
-<div align="center">
-  <img src="docs/screenshots/role_picker.png" alt="Role Picker Screen" width="90%" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12);" />
-</div>
-
-### 2. Parent Wallet Dashboard
+Parent Wallet Dashboard
 One consolidated balance covering siblings, scannable UPI QR checkout, and an overview of active payment plans.
 
 <div align="center">
