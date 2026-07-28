@@ -20,8 +20,6 @@ None of that is really a technology problem. It's a **dignity** problem. FeeBrid
 
 ## 📸 Main Dashboard Preview
 
-Here is a look at the responsive **Parent Wallet Portal**, showcasing the unified family balance, interactive installment plans, and transaction history.
-
 <img width="1907" height="916" alt="image" src="https://github.com/user-attachments/assets/be020fa5-3d21-4524-9052-4223d7825efd" />
 
 ---
