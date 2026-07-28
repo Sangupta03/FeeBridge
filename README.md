@@ -46,12 +46,18 @@ FeeBridge provides three tailored views off a single shared source of truth:
 
 ### 🏫 The Office (School Administration)
 Monitor total outstanding collections, view cash/cheque deposits pending review, calibrate risk prediction models, and dispatch templated alerts via the Notification Hub.
+<img width="1876" height="921" alt="image" src="https://github.com/user-attachments/assets/a070a740-6ace-40e8-a392-03b873306d2e" />
+
 
 ### 👪 The Family (Parent Portal)
 View a single, unified balance for all siblings. Access custom payment plans, scan scannable UPI QR codes for instant payment, and read inbox notifications.
+<img width="1913" height="911" alt="image" src="https://github.com/user-attachments/assets/7e566a40-1c36-4136-b38c-0b51aa89c84a" />
+
 
 ### 🧾 The Front Desk (Clerk Desk)
 Accept cash and cheque payments instantly, even when offline. The matching engine automatically maps payments to outstanding invoices when the network resumes.
+<img width="1860" height="915" alt="image" src="https://github.com/user-attachments/assets/ac0c98b2-40b3-4126-af2c-280aa440cd4a" />
+
 
 ---
 
@@ -67,12 +73,16 @@ FeeBridge includes a built-in Machine Learning classification model to predict l
 - **L2-Regularized Logistic Regression**: Trained directly inside the browser using client-side Javascript.
 - **SMOTE Generator**: Automatically synthesizes up to 5,000 artificial profiles based on real historical data to ensure high-fidelity model training.
 - **Admin Calibration Control**: School administrators can add mock records, fine-tune weights, and run "Auto-Calibrate" to observe training accuracy curves in real-time.
+<img width="1888" height="903" alt="image" src="https://github.com/user-attachments/assets/b8e55779-e16f-4844-bafb-61970844a621" />
+
 
 ### 3. 💬 Integrated Notification Hub
 Alert parents about overdue payments empathetically without manual copy-pasting.
 - **Real WhatsApp Deep Links**: Generates `wa.me/` Click-to-Chat links containing pre-formatted messages to launch the WhatsApp app on the administrator's desktop or phone.
 - **SMS URI Protocols**: Uses `sms:` link schemes for mobile dispatch.
 - **Inbox Feed**: Parents see a clear feed of all sent alerts directly inside the portal header inbox, with red unread indicators.
+  <img width="1892" height="915" alt="image" src="https://github.com/user-attachments/assets/daa10675-043f-423e-b8ec-c85e99de2c21" />
+
 
 ### 4. 📳 Robust Offline Ledger
 Front desks are prone to network dropouts. FeeBridge is designed to work fully offline.
