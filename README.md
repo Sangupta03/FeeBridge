@@ -36,8 +36,6 @@ None of that is really a technology problem. It's a **dignity** problem. FeeBrid
 - [Run it Locally](#-run-it-locally)
 - [Firebase Integration](#-firebase-integration-optional)
 - [Testing & Verification](#-testing--verification)
-- [Honest Notes](#-honest-notes)
-
 ---
 
 ## 👥 Core Portals
