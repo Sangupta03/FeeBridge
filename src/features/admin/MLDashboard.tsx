@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Cpu, Play, RotateCcw, Database, LineChart, Info, CheckCircle2, ShieldAlert, TrendingUp } from 'lucide-react';
+import { Cpu, Play, RotateCcw, Database, LineChart, Info, CheckCircle2, ShieldAlert, TrendingUp, Plus, X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { WEIGHTS } from '../../domain/risk';
-import { TRAINING_DATA, SMOTE_TRAINING_DATA, trainStep, calculateLoss, calculateAccuracy, vectorToWeights } from '../../domain/ml';
+import { TRAINING_DATA, runSMOTE, trainStep, calculateLoss, calculateAccuracy, vectorToWeights, type TrainingInstance } from '../../domain/ml';
 import { ResponsiveContainer, LineChart as RechartsLineChart, CartesianGrid, XAxis, YAxis, Tooltip, Line } from 'recharts';
 
 interface HistoryPoint {
@@ -19,8 +19,24 @@ export function MLDashboard() {
   // Dynamic weights being configured (object representation)
   const currentWeights = storeWeights || WEIGHTS;
 
+  // Local dataset initialized with base seed data
+  const [dataset, setDataset] = useState<TrainingInstance[]>(() => TRAINING_DATA);
+  const [activeSMOTEData, setActiveSMOTEData] = useState<TrainingInstance[]>(() => runSMOTE(TRAINING_DATA, 5000));
+
   // Local state for calibrated weights
   const [localWeights, setLocalWeights] = useState({ ...currentWeights });
+
+  // Add Case Form State
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newFamilyName, setNewFamilyName] = useState('');
+  const [newLatePayments, setNewLatePayments] = useState(0);
+  const [newOverdueMonths, setNewOverdueMonths] = useState(0);
+  const [newOutstanding, setNewOutstanding] = useState(10000);
+  const [newPlans, setNewPlans] = useState(0);
+  const [newDelay, setNewDelay] = useState(5);
+  const [newSiblings, setNewSiblings] = useState(1);
+  const [newPartial, setNewPartial] = useState(false);
+  const [newOutcome, setNewOutcome] = useState(0); // 0 = On-Time, 1 = Overdue
 
   // Optimal fixed hyperparameters for enterprise auto-calibration
   const learningRate = 0.08;
@@ -40,7 +56,7 @@ export function MLDashboard() {
     setLocalWeights({ ...currentWeights });
   }, [storeWeights]);
 
-  // Initial calculation
+  // Recalculate cost/accuracy when dataset or weights change
   useEffect(() => {
     const wVec = [
       currentWeights.latePayments,
@@ -51,14 +67,58 @@ export function MLDashboard() {
       currentWeights.avgDelayDaysPer7,
       currentWeights.siblings
     ];
-    setCost(calculateLoss(wVec, currentWeights.intercept, SMOTE_TRAINING_DATA));
-    setAccuracy(calculateAccuracy(wVec, currentWeights.intercept, SMOTE_TRAINING_DATA));
-  }, [currentWeights]);
+    setCost(calculateLoss(wVec, currentWeights.intercept, activeSMOTEData));
+    setAccuracy(calculateAccuracy(wVec, currentWeights.intercept, activeSMOTEData));
+  }, [currentWeights, activeSMOTEData]);
+
+  // Regenerate SMOTE set if the user adds data or resets
+  const regenerateSMOTE = (newSeedData: TrainingInstance[]) => {
+    const freshSMOTE = runSMOTE(newSeedData, 5000);
+    setActiveSMOTEData(freshSMOTE);
+  };
 
   const handleReset = () => {
     resetWeights();
+    setDataset(TRAINING_DATA);
+    regenerateSMOTE(TRAINING_DATA);
     setHistory([]);
     setEpoch(0);
+  };
+
+  // Add custom case to the training dataset
+  const handleAddCase = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newFamilyName.trim()) return;
+
+    const newInstance: TrainingInstance = {
+      name: newFamilyName.trim().endsWith('Family') ? newFamilyName.trim() : `${newFamilyName.trim()} Family`,
+      features: {
+        latePayments: Number(newLatePayments),
+        overdueMonths: Number(newOverdueMonths),
+        hadPartialPayment: newPartial,
+        outstandingAmount: Number(newOutstanding),
+        installmentPlansUsed: Number(newPlans),
+        avgDelayDays: Number(newDelay),
+        siblings: Number(newSiblings)
+      },
+      defaulted: Number(newOutcome)
+    };
+
+    const nextDataset = [newInstance, ...dataset];
+    setDataset(nextDataset);
+    regenerateSMOTE(nextDataset);
+    setShowAddForm(false);
+    
+    // Reset form fields
+    setNewFamilyName('');
+    setNewLatePayments(0);
+    setNewOverdueMonths(0);
+    setNewOutstanding(10000);
+    setNewPlans(0);
+    setNewDelay(5);
+    setNewSiblings(1);
+    setNewPartial(false);
+    setNewOutcome(0);
   };
 
   // Run training loop
@@ -86,7 +146,7 @@ export function MLDashboard() {
     const interval = setInterval(() => {
       for (let i = 0; i < stepSize; i++) {
         currentEpoch++;
-        const step = trainStep(wVec, intercept, SMOTE_TRAINING_DATA, learningRate);
+        const step = trainStep(wVec, intercept, activeSMOTEData, learningRate);
         wVec = step.weights;
         intercept = step.intercept;
         
@@ -106,8 +166,8 @@ export function MLDashboard() {
       const finalWeights = vectorToWeights(wVec, intercept);
       setLocalWeights(finalWeights);
       saveWeights(finalWeights);
-      setCost(calculateLoss(wVec, intercept, SMOTE_TRAINING_DATA));
-      setAccuracy(calculateAccuracy(wVec, intercept, SMOTE_TRAINING_DATA));
+      setCost(calculateLoss(wVec, intercept, activeSMOTEData));
+      setAccuracy(calculateAccuracy(wVec, intercept, activeSMOTEData));
       setHistory([...epochHistory]);
 
       if (currentEpoch >= maxEpochs) {
@@ -338,15 +398,150 @@ export function MLDashboard() {
       </div>
 
       {/* Historical Data View */}
-      <div className="card p-5 space-y-3">
-        <h3 className="text-base font-bold flex items-center gap-1.5 text-ink">
-          <Database size={16} />
-          Historical Base Records (30 Families)
-        </h3>
-        <p className="text-xs text-body">
-          Sample database of actual family records used as baseline seeds to calibrate the prediction model.
-        </p>
-        <div className="overflow-x-auto max-h-60 border border-line/45 rounded-lg">
+      <div className="card p-5 space-y-4">
+        <div className="flex justify-between items-center flex-wrap gap-2">
+          <div>
+            <h3 className="text-base font-bold flex items-center gap-1.5 text-ink">
+              <Database size={16} />
+              Historical Family Database ({dataset.length} Records)
+            </h3>
+            <p className="text-xs text-body mt-0.5">
+              Baseline profiles used as historical samples to calibrate the predictor system.
+            </p>
+          </div>
+          
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="btn-primary text-cream py-1.5 px-3 text-xs flex items-center gap-1 cursor-pointer hover:scale-[1.01]"
+          >
+            {showAddForm ? <X size={13} /> : <Plus size={13} />}
+            {showAddForm ? 'Cancel' : 'Register Payment Record'}
+          </button>
+        </div>
+
+        {/* Add Record Form */}
+        {showAddForm && (
+          <form onSubmit={handleAddCase} className="rounded-xl border border-line bg-paper2 dark:bg-[#1c221f]/50 p-4 space-y-4 animate-in fade-in duration-200">
+            <h4 className="text-xs font-bold text-ink uppercase tracking-wider">Log New Payment History Case</h4>
+            
+            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+              <div>
+                <label className="text-[10px] font-bold text-muted block mb-1">Family Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Roy"
+                  value={newFamilyName}
+                  onChange={(e) => setNewFamilyName(e.target.value)}
+                  className="w-full text-xs rounded border border-line px-2.5 py-1.5 focus:outline-none focus:border-brand bg-paper dark:bg-[#131715]"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-muted block mb-1">Past Late Payments</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={20}
+                  value={newLatePayments}
+                  onChange={(e) => setNewLatePayments(Number(e.target.value))}
+                  className="w-full text-xs rounded border border-line px-2.5 py-1.5 focus:outline-none focus:border-brand bg-paper dark:bg-[#131715]"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-muted block mb-1">Overdue Months</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={12}
+                  value={newOverdueMonths}
+                  onChange={(e) => setNewOverdueMonths(Number(e.target.value))}
+                  className="w-full text-xs rounded border border-line px-2.5 py-1.5 focus:outline-none focus:border-brand bg-paper dark:bg-[#131715]"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-muted block mb-1">Fee Balance Owed (₹)</label>
+                <input
+                  type="number"
+                  min={0}
+                  step={1000}
+                  value={newOutstanding}
+                  onChange={(e) => setNewOutstanding(Number(e.target.value))}
+                  className="w-full text-xs rounded border border-line px-2.5 py-1.5 focus:outline-none focus:border-brand bg-paper dark:bg-[#131715]"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-muted block mb-1">Avg Delay (Days)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={newDelay}
+                  onChange={(e) => setNewDelay(Number(e.target.value))}
+                  className="w-full text-xs rounded border border-line px-2.5 py-1.5 focus:outline-none focus:border-brand bg-paper dark:bg-[#131715]"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-muted block mb-1">Children Enrolled</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={5}
+                  value={newSiblings}
+                  onChange={(e) => setNewSiblings(Number(e.target.value))}
+                  className="w-full text-xs rounded border border-line px-2.5 py-1.5 focus:outline-none focus:border-brand bg-paper dark:bg-[#131715]"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-muted block mb-1">Previous Plans Used</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={newPlans}
+                  onChange={(e) => setNewPlans(Number(e.target.value))}
+                  className="w-full text-xs rounded border border-line px-2.5 py-1.5 focus:outline-none focus:border-brand bg-paper dark:bg-[#131715]"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-muted block mb-1">Historical Status</label>
+                <select
+                  value={newOutcome}
+                  onChange={(e) => setNewOutcome(Number(e.target.value))}
+                  className="w-full text-xs rounded border border-line px-2.5 py-1.5 focus:outline-none focus:border-brand bg-paper dark:bg-[#131715]"
+                >
+                  <option value={0}>On-Time Payment</option>
+                  <option value={1}>Overdue / Late</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <label className="flex items-center gap-2 text-xs font-semibold text-ink cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={newPartial}
+                  onChange={(e) => setNewPartial(e.target.checked)}
+                  className="rounded border-line text-brand focus:ring-brand"
+                />
+                Has a history of making partial/fractional payments
+              </label>
+
+              <button
+                type="submit"
+                className="btn-primary text-cream py-1.5 px-4 text-xs font-bold rounded-lg cursor-pointer"
+              >
+                Log Record & Sync
+              </button>
+            </div>
+          </form>
+        )}
+
+        <div className="overflow-x-auto max-h-72 border border-line/45 rounded-lg">
           <table className="w-full text-[11px] text-left border-collapse">
             <thead>
               <tr className="bg-paper dark:bg-[#1a201d]/60 text-muted uppercase font-bold tracking-wider border-b border-line">
@@ -362,7 +557,7 @@ export function MLDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-line/40">
-              {TRAINING_DATA.map((row, idx) => (
+              {dataset.map((row, idx) => (
                 <tr key={idx} className="hover:bg-paper/40">
                   <td className="p-2 border-r border-line font-semibold text-ink">{row.name}</td>
                   <td className="p-2 border-r border-line text-center text-body">{row.features.latePayments}</td>
