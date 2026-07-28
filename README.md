@@ -243,9 +243,7 @@ The core business logic of the domain engines is verified using unit tests.
 
 ---
 
-## 📝 Honest Notes
-
-We'd rather tell you what's real than let a demo oversell it.
+## 📝 Future Goals: Features to improve
 
 - **FeeBridgeGenius is a scripted assistant, not an LLM.** It matches keywords in your question against a set of response templates tuned to FeeBridge's own data (risk lists, forecasts, reminder drafts, installment math) — fast and reliable for a demo, but it is not calling out to any AI model.
 - **The Notification Center's "Automation Rules" toggles are not yet wired up.** They're present in the UI to show the intended direction (auto-sending risk-based or due-date alerts), but toggling them today doesn't trigger anything yet — every alert currently sent is a deliberate click.
