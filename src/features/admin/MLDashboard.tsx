@@ -126,13 +126,13 @@ export function MLDashboard() {
     ) || 1;
 
     const items = [
-      { key: 'overdueMonths', name: 'Overdue Month Count', desc: 'Number of consecutive months fees have remained unpaid' },
-      { key: 'latePayments', name: 'Late Payment Frequency', desc: 'Total historical instances of past-due payments' },
-      { key: 'outstandingPer10k', name: 'Outstanding Balance', desc: 'Total current unpaid balance scaled per ₹10,000' },
-      { key: 'avgDelayDaysPer7', name: 'Average Payment Delay', desc: 'Mean payment delay in days past target dates' },
-      { key: 'hadPartialPayment', name: 'Partial Payment History', desc: 'Instances where parent made a fractional payment' },
-      { key: 'installmentPlansUsed', name: 'Installment Plans Used', desc: 'Previous usage count of school-offered splits' },
-      { key: 'siblings', name: 'Sibling Count Load', desc: 'Number of students from the same household' },
+      { key: 'overdueMonths', name: 'Consecutive Overdue Months', desc: 'Number of months in a row fees remain unpaid' },
+      { key: 'latePayments', name: 'Past Late Payments', desc: 'Total times the family paid past the deadline in the past' },
+      { key: 'outstandingPer10k', name: 'Outstanding Fee Balance', desc: 'Total current unpaid balance' },
+      { key: 'avgDelayDaysPer7', name: 'Average Delay in Days', desc: 'Average number of days payments are delayed' },
+      { key: 'hadPartialPayment', name: 'History of Partial Payments', desc: 'Whether they have paid fees in small fractions before' },
+      { key: 'installmentPlansUsed', name: 'Previous Installment Plans', desc: 'Total custom payment plans offered before' },
+      { key: 'siblings', name: 'Number of Children Enrolled', desc: 'Sibling load from the same household' },
     ];
 
     return items.map(item => {
@@ -140,16 +140,16 @@ export function MLDashboard() {
       const ratio = Math.min(100, Math.round((Math.abs(val) / maxWeight) * 100));
       
       let badgeColor = "bg-line text-muted";
-      let impactText = "Negligible Impact";
+      let impactText = "Low Influence";
       if (val >= 1.5) {
         badgeColor = "bg-peach text-terra-dark";
-        impactText = "Critical Impact";
+        impactText = "Critical Influence";
       } else if (val >= 0.8) {
         badgeColor = "bg-amber/15 text-amber";
-        impactText = "High Impact";
+        impactText = "High Influence";
       } else if (val >= 0.3) {
         badgeColor = "bg-mint text-brand-dark";
-        impactText = "Moderate Impact";
+        impactText = "Moderate Influence";
       }
 
       return {
@@ -171,10 +171,10 @@ export function MLDashboard() {
         <div className="space-y-1">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Cpu size={20} className="text-brand" />
-            Empathetic Risk Calibration Engine
+            Automatic Risk Predictor Calibration
           </h2>
           <p className="text-sm text-body">
-            Calibrate family payment risk weights using in-browser logistic regression. Replaces arbitrary heuristics with statistical models.
+            Calibrate the payment risk calculator using school records to ensure family risk ratings remain accurate.
           </p>
         </div>
         <div className="flex gap-2">
@@ -184,7 +184,7 @@ export function MLDashboard() {
             disabled={isTraining}
           >
             <RotateCcw size={13} />
-            Reset to Baseline
+            Reset to Standard Settings
           </button>
         </div>
       </div>
@@ -198,8 +198,8 @@ export function MLDashboard() {
           <div className="card p-5 space-y-4">
             <div className="flex justify-between items-start">
               <div>
-                <h3 className="text-base font-bold text-ink">Model Calibration Hub</h3>
-                <p className="text-xs text-body mt-0.5">Automated L2-Regularized Batch Gradient Descent</p>
+                <h3 className="text-base font-bold text-ink">Risk Calibration Dashboard</h3>
+                <p className="text-xs text-body mt-0.5">Statistical optimization of risk parameters</p>
               </div>
               <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
                 isTraining 
@@ -211,17 +211,17 @@ export function MLDashboard() {
                 {isTraining ? (
                   <>
                     <TrendingUp size={11} className="animate-bounce" />
-                    Optimizing ({epoch}/{maxEpochs})
+                    Optimizing Model ({epoch}/{maxEpochs})
                   </>
                 ) : storeWeights ? (
                   <>
                     <CheckCircle2 size={11} className="text-brand" />
-                    Calibrated
+                    System Calibrated
                   </>
                 ) : (
                   <>
                     <ShieldAlert size={11} />
-                    Baseline Heuristics
+                    Standard Settings
                   </>
                 )}
               </span>
@@ -230,23 +230,23 @@ export function MLDashboard() {
             <div className="rounded-lg bg-mint/30 dark:bg-mint/5 border border-line p-3 text-xs text-body leading-relaxed flex gap-2">
               <Info size={14} className="text-brand flex-none mt-0.5" />
               <p>
-                Calibration generates 5,000 balanced synthetic logs using **SMOTE** (Synthetic Minority Over-sampling Technique) based on 30 historical cases, then tunes risk weights to minimize binary cross-entropy loss.
+                The system analyzes historical payment trends across 5,000 generated records to learn which factors are the strongest indicators of families needing flexible payment plans.
               </p>
             </div>
 
             {/* Performance metrics */}
             <div className="grid grid-cols-3 gap-2 text-center bg-paper dark:bg-[#1a201d]/30 border border-line/45 rounded-lg p-3">
               <div>
-                <div className="text-[10px] text-muted uppercase font-bold tracking-wider">Validation Loss</div>
+                <div className="text-[10px] text-muted uppercase font-bold tracking-wider">Prediction Error</div>
                 <div className="font-serif text-lg font-bold text-ink mt-0.5">{cost}</div>
               </div>
               <div>
-                <div className="text-[10px] text-muted uppercase font-bold tracking-wider">Model Accuracy</div>
+                <div className="text-[10px] text-muted uppercase font-bold tracking-wider">Calculator Accuracy</div>
                 <div className="font-serif text-lg font-bold text-brand mt-0.5">{accuracy}%</div>
               </div>
               <div>
-                <div className="text-[10px] text-muted uppercase font-bold tracking-wider">Oversample Rate</div>
-                <div className="font-serif text-lg font-bold text-ink mt-0.5">5,000 cases</div>
+                <div className="text-[10px] text-muted uppercase font-bold tracking-wider">Analyzed Records</div>
+                <div className="font-serif text-lg font-bold text-ink mt-0.5">5,000 files</div>
               </div>
             </div>
 
@@ -256,7 +256,7 @@ export function MLDashboard() {
               className="btn-primary w-full py-2.5 text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-sm hover:scale-[1.01]"
             >
               <Play size={13} fill="currentColor" />
-              {isTraining ? `Recalibrating Weight Coefficients...` : 'Run Statistical Auto-Calibration'}
+              {isTraining ? `Running Calibrations...` : 'Auto-Calibrate Risk System'}
             </button>
           </div>
 
@@ -265,9 +265,9 @@ export function MLDashboard() {
             <div className="card p-5 space-y-3">
               <h3 className="text-base font-bold flex items-center gap-1.5 text-ink">
                 <LineChart size={16} />
-                Calibration Convergence
+                Calibration Progress
               </h3>
-              <p className="text-xs text-body">Plotting Cost Function decay against validation set accuracy.</p>
+              <p className="text-xs text-body">Visual graph showing the reduction in errors and increase in accuracy as the model optimizes.</p>
               <div className="h-56 mt-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <RechartsLineChart data={history} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
@@ -278,7 +278,7 @@ export function MLDashboard() {
                       contentStyle={{ background: 'var(--color-paper)', border: '1px solid var(--color-line)', borderRadius: 8, fontSize: 11 }}
                       labelStyle={{ color: 'var(--color-ink)', fontWeight: 600 }}
                     />
-                    <Line type="monotone" dataKey="loss" stroke="var(--color-terra)" strokeWidth={2} name="Cost/Loss" dot={false} />
+                    <Line type="monotone" dataKey="loss" stroke="var(--color-terra)" strokeWidth={2} name="Error Rate" dot={false} />
                     <Line type="monotone" dataKey="accuracy" stroke="var(--color-brand)" strokeWidth={2} name="Accuracy %" dot={false} />
                   </RechartsLineChart>
                 </ResponsiveContainer>
@@ -292,8 +292,8 @@ export function MLDashboard() {
         <div className="space-y-6">
           <div className="card p-5 space-y-4">
             <div>
-              <h3 className="text-base font-bold text-ink">Calibrated Risk Indicators</h3>
-              <p className="text-xs text-body mt-0.5">Statistical impact coefficients for individual family metrics</p>
+              <h3 className="text-base font-bold text-ink">Important Risk Factors</h3>
+              <p className="text-xs text-body mt-0.5">Learned importance weights for individual payment history metrics</p>
             </div>
 
             <div className="space-y-4 pt-1">
@@ -324,8 +324,8 @@ export function MLDashboard() {
 
               <div className="border-t border-line/40 pt-3 flex justify-between items-center text-xs">
                 <div>
-                  <span className="font-semibold text-ink">Model Intercept (Bias)</span>
-                  <span className="block text-[10px] text-muted">Baseline prediction when all risk metrics are zero</span>
+                  <span className="font-semibold text-ink">Base Risk Level</span>
+                  <span className="block text-[10px] text-muted">Initial risk level before considering family details</span>
                 </div>
                 <span className="font-mono bg-paper dark:bg-[#1a201d] px-1.5 py-0.5 rounded border border-line/45 text-[11px] font-bold text-ink">
                   {localWeights.intercept?.toFixed(2)}
@@ -341,24 +341,24 @@ export function MLDashboard() {
       <div className="card p-5 space-y-3">
         <h3 className="text-base font-bold flex items-center gap-1.5 text-ink">
           <Database size={16} />
-          Historical Base Training Logs (Pre-Oversampling)
+          Historical Base Records (30 Families)
         </h3>
         <p className="text-xs text-body">
-          The 30 primary seed profiles gathered from historical records used as seeds for the SMOTE generation.
+          Sample database of actual family records used as baseline seeds to calibrate the prediction model.
         </p>
         <div className="overflow-x-auto max-h-60 border border-line/45 rounded-lg">
           <table className="w-full text-[11px] text-left border-collapse">
             <thead>
               <tr className="bg-paper dark:bg-[#1a201d]/60 text-muted uppercase font-bold tracking-wider border-b border-line">
-                <th className="p-2 border-r border-line">Family Log</th>
+                <th className="p-2 border-r border-line">Family Name</th>
                 <th className="p-2 border-r border-line text-center">Late Pmts</th>
                 <th className="p-2 border-r border-line text-center">Overdue Months</th>
                 <th className="p-2 border-r border-line text-center">Partial Paid</th>
-                <th className="p-2 border-r border-line text-center">Amt (10k)</th>
+                <th className="p-2 border-r border-line text-center">Fee Owed</th>
                 <th className="p-2 border-r border-line text-center">Prev Plans</th>
                 <th className="p-2 border-r border-line text-center">Delay Days</th>
-                <th className="p-2 border-r border-line text-center">Siblings</th>
-                <th className="p-2 text-center">Historical Outcome</th>
+                <th className="p-2 border-r border-line text-center">Children</th>
+                <th className="p-2 text-center">Historical Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line/40">
@@ -368,7 +368,7 @@ export function MLDashboard() {
                   <td className="p-2 border-r border-line text-center text-body">{row.features.latePayments}</td>
                   <td className="p-2 border-r border-line text-center text-body">{row.features.overdueMonths}</td>
                   <td className="p-2 border-r border-line text-center text-body">{row.features.hadPartialPayment ? 'Y' : 'N'}</td>
-                  <td className="p-2 border-r border-line text-center text-body">{(row.features.outstandingAmount/10000).toFixed(1)}</td>
+                  <td className="p-2 border-r border-line text-center text-body">₹{(row.features.outstandingAmount).toLocaleString()}</td>
                   <td className="p-2 border-r border-line text-center text-body">{row.features.installmentPlansUsed}</td>
                   <td className="p-2 border-r border-line text-center text-body">{Math.round(row.features.avgDelayDays)}d</td>
                   <td className="p-2 border-r border-line text-center text-body">{row.features.siblings}</td>
@@ -376,7 +376,7 @@ export function MLDashboard() {
                     <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
                       row.defaulted === 1 ? 'bg-peach text-terra-dark' : 'bg-mint text-brand-dark'
                     }`}>
-                      {row.defaulted === 1 ? 'Late' : 'On-Time'}
+                      {row.defaulted === 1 ? 'Overdue' : 'On-Time'}
                     </span>
                   </td>
                 </tr>
