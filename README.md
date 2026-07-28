@@ -18,12 +18,20 @@ None of that is really a technology problem. It's a **dignity** problem. FeeBrid
 
 ---
 
-## 📸 Parent Portal Preview
+## 🎨 Product Interface Gallery
 
-Here is a look at the responsive **Parent Wallet Portal**, showcasing the unified family balance, interactive installment plans, and transaction history.
+### 1. Role Selection Portal
+Welcome screen with smooth 3D hover effects (parallax tilt interaction) allowing users to switch between the three core portals.
 
 <div align="center">
-  <img src="docs/screenshots/parent_portal.png" alt="Parent Wallet Portal Dashboard" width="90%" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12);" />
+  <img src="docs/screenshots/role_picker.png" alt="Role Picker Screen" width="90%" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12);" />
+</div>
+
+### 2. Parent Wallet Dashboard
+One consolidated balance covering siblings, scannable UPI QR checkout, and an overview of active payment plans.
+
+<div align="center">
+  <img src="docs/screenshots/parent_portal.png" alt="Parent Portal" width="90%" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12);" />
 </div>
 
 ---
@@ -44,18 +52,33 @@ Here is a look at the responsive **Parent Wallet Portal**, showcasing the unifie
 
 FeeBridge provides three tailored views off a single shared source of truth:
 
-| Portal | Intended Audience | Core Capabilities |
-| :--- | :--- | :--- |
-| 🏫 **The Office** | School Administrators | Monitor total outstanding collections, view cash/cheque deposits pending review, calibrate risk prediction models, and dispatch templated alerts via the Notification Hub. |
-| 👪 **The Family** | Parents & Guardians | View a single, unified balance for all siblings. Access custom payment plans, scan scannable UPI QR codes for instant payment, and read inbox notifications. |
-| 🧾 **The Front Desk** | Clerks & Receptionists | Accept cash and cheque payments instantly, even when offline. The matching engine automatically maps payments to outstanding invoices when the network resumes. |
+### 🏫 The Office (School Administration)
+Monitor total outstanding collections, view cash/cheque deposits pending review, calibrate risk prediction models, and dispatch templated alerts via the Notification Hub.
+
+<div align="center">
+  <img src="docs/screenshots/admin_dashboard.png" alt="Office Administrator Dashboard" width="90%" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); margin-top: 10px; margin-bottom: 20px;" />
+</div>
+
+### 👪 The Family (Parent Portal)
+View a single, unified balance for all siblings. Access custom payment plans, scan scannable UPI QR codes for instant payment, and read inbox notifications.
+
+<div align="center">
+  <img src="docs/screenshots/payment_plan.png" alt="Installment Timeline Details" width="90%" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); margin-top: 10px; margin-bottom: 20px;" />
+</div>
+
+### 🧾 The Front Desk (Clerk Desk)
+Accept cash and cheque payments instantly, even when offline. The matching engine automatically maps payments to outstanding invoices when the network resumes.
+
+<div align="center">
+  <img src="docs/screenshots/clerk_desk.png" alt="Front Desk Cash Register" width="90%" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); margin-top: 10px; margin-bottom: 20px;" />
+</div>
 
 ---
 
 ## 🚀 Key Features
 
 ### 1. 👪 Unified Family Wallet
-Instead of managing separate invoices for siblings, FeeBridge rolls up all child accounts (`studentId`) under a single parent account (`familyId`). 
+Instead of managing separate invoices for siblings, FeeBridge rolls up all child accounts (`studentId`) under a parent account (`familyId`). 
 - **Single Payment Flow**: Pay the entire family balance in one UPI checkout.
 - **Scannable UPI Intent QR Code**: Dynamically generates local Indian `upi://pay` intents containing the school VPA and exact payment amount.
 
@@ -64,6 +87,10 @@ FeeBridge includes a built-in Machine Learning classification model to predict l
 - **L2-Regularized Logistic Regression**: Trained directly inside the browser using client-side Javascript.
 - **SMOTE Generator**: Automatically synthesizes up to 5,000 artificial profiles based on real historical data to ensure high-fidelity model training.
 - **Admin Calibration Control**: School administrators can add mock records, fine-tune weights, and run "Auto-Calibrate" to observe training accuracy curves in real-time.
+
+<div align="center">
+  <img src="docs/screenshots/ml_calibration.png" alt="ML Calibration Interface" width="90%" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); margin-top: 10px; margin-bottom: 20px;" />
+</div>
 
 ### 3. 💬 Integrated Notification Hub
 Alert parents about overdue payments empathetically without manual copy-pasting.
