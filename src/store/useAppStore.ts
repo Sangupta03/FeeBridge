@@ -48,6 +48,7 @@ interface AppState {
   /** manually split a Needs Review payment across one or more of that family's invoices */
   splitPayment: (paymentId: string, allocations: Array<{ invoiceId: string; amount: number }>) => Promise<void>;
   toggleOffline: () => void;
+  resetData: () => void;
 
   // ---- derived
   riskProfiles: () => Record<string, FamilyRiskProfile>;
@@ -260,6 +261,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   toggleOffline: () => {
     const { repo, data } = get();
     repo.setOffline?.(data?.online ?? true);
+  },
+  resetData: () => {
+    const { repo } = get();
+    if ('reset' in repo && typeof repo.reset === 'function') {
+      repo.reset();
+    }
   },
 
   riskProfiles: () => {

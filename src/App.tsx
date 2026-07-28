@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   GraduationCap, Building2, Wallet, Banknote, Wifi, WifiOff, Lightbulb, Sun, Moon,
-  type LucideIcon,
+  RotateCcw, type LucideIcon,
 } from 'lucide-react';
 import { useAppStore } from './store/useAppStore';
 import type { Role } from './types';
@@ -42,7 +42,7 @@ const WHY: Array<{ icon: LucideIcon; title: string; body: string }> = [
 ];
 
 export default function App() {
-  const { init, ready, user, signInAs, signOut, data, toggleOffline, theme, setTheme } = useAppStore();
+  const { init, ready, user, signInAs, signOut, data, toggleOffline, theme, setTheme, resetData } = useAppStore();
 
   useEffect(() => { init(); }, [init]);
 
@@ -74,12 +74,26 @@ export default function App() {
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="truncate font-serif text-base font-bold text-ink sm:text-xl">FeeBridge</span>
-                <span
-                  className="hidden flex-none rounded-full bg-paper2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted sm:inline"
-                  title="This school and its data are seeded for the demo, not real"
-                >
-                  Demo data
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className="hidden flex-none rounded-full bg-paper2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted sm:inline"
+                    title="This school and its data are seeded for the demo, not real"
+                  >
+                    Demo data
+                  </span>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Reset all demo data back to its original seeded state? This will clear all transactions, plans, and custom settings.')) {
+                        resetData();
+                      }
+                    }}
+                    className="hidden flex-none items-center gap-1 rounded-full border border-terra/30 bg-peach/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-terra hover:bg-peach hover:border-terra transition-all cursor-pointer sm:inline-flex"
+                    title="Reset demo data to initial state"
+                  >
+                    <RotateCcw size={10} strokeWidth={2.5} />
+                    Reset
+                  </button>
+                </div>
               </div>
               <div className="hidden text-xs text-muted sm:block">Green Valley School · Term 2 2026</div>
             </div>

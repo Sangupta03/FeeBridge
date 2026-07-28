@@ -11,6 +11,8 @@ coverage
 # real technical artifact worth keeping public
 docs/*
 !docs/ARCHITECTURE.md
+!docs/screenshots/
+!docs/screenshots/*
 
 .vercel
 node-bin
