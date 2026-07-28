@@ -13,6 +13,8 @@ docs/*
 !docs/ARCHITECTURE.md
 !docs/screenshots/
 !docs/screenshots/*
+!docs/media/
+!docs/media/*
 
 .vercel
 node-bin
