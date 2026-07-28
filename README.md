@@ -10,13 +10,13 @@
 
 <br/>
 
-<a href="https://github.com/Sangupta03/FeeBridge/blob/main/docs/media/demo.mp4">
+<a href="https://drive.google.com/file/d/18x-aqDVY2euFJ4b2D0w7vzrWswzE1PEh/view?usp=sharing">
   <img src="https://img.shields.io/badge/%F0%9F%8E%AC_DEMO_VIDEO-Watch_the_5--minute_walkthrough-D90429?style=for-the-badge" alt="DEMO VIDEO — Watch the 5-minute walkthrough" />
   <br/><br/>
   <img width="820" alt="Click to watch the full FeeBridge demo" src="https://github.com/user-attachments/assets/be020fa5-3d21-4524-9052-4223d7825efd" style="border-radius:12px;border:3px solid #D90429;" />
 </a>
 
-<sub>👆 Click the screenshot to open the full video — plays right inline on GitHub, no download needed.</sub>
+<sub>👆 Click the screenshot to watch the full demo on Google Drive.</sub>
 
 </div>
 
